@@ -1705,7 +1705,13 @@ function buildWorld(seed){
   tiles.forEach(t=>qTiles[quadOf(t[0],t[1])].push(t));
   const cA=new THREE.Color(pal.a), cB=new THREE.Color(pal.b);
   // seeded floor paint: classic duo, gradient, radial, full-wheel, triad...
-  const paintKind=FLOOR_PAINTS[Math.floor(rng()*FLOOR_PAINTS.length)].kind;
+  // floor paint: fun variants (wheels/gradients) are 1/20; themed mines NEVER
+  // get them — Green Hill keeps its blues, the Backrooms keep their yellow
+  let paintKind='duo';
+  if(!mineTheme && rng()<1/20){
+    const fun=['gradient','radialGrad','wheel','wheelRings','triad','splitWheel','pastelWheel'];
+    paintKind=fun[Math.floor(rng()*fun.length)];
+  }
   const paint=floorPaintFor(paintKind,pal,rng);
   const BASE=FLOOR_Y-3.2;
   const floorMeshes=qTiles.map((qt,qi)=>{
@@ -1982,7 +1988,7 @@ function buildWorld(seed){
   Object.assign(W,{group:g,hyper,ring,beam,beamMat,glow,plight,rings,dust,dpar,dfl,
     shardsIM,shardP,core,coreMat,palette:pal,shape,topAt,cCol,cColF,rseg:RSEG,
     ringCol,ringMaxR,ringSpd,ringW,ringSpiral,ringDir,ringBob,ringPetals,ringPetalAmp,ringShape,sat,
-    debA,debCol,debG,debKind,orbSq,coreWob,coreWobSp,goldKind,floorMeshes,theme:mineTheme,
+    debA,debCol,debG,debKind,orbSq,coreWob,coreWobSp,goldKind,floorMeshes,theme:mineTheme,paintKind,
     colTop:(x,z)=>topAt(Math.round(x),Math.round(z))});   // exact rendered voxel height
   setDebrisGeometry(debKind);
   recomputeCoreVisuals();
