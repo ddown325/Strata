@@ -122,6 +122,65 @@
   #autoBtn:hover:not(.hidden){color:var(--amber);border-color:var(--amber)}
   #autoBtn.hidden{display:none}
 
+  /* ---------- COLLAPSE MODAL ---------- */
+  #modal{position:fixed;inset:0;z-index:90;background:rgba(5,4,3,.74);
+         display:flex;align-items:center;justify-content:center}
+  #modal .mBox{width:322px;background:var(--bg1);border:1px solid var(--amber);
+               padding:18px 18px 14px;box-shadow:0 0 44px rgba(0,0,0,.65)}
+  #modal h3{margin:0 0 12px;font-size:13px;letter-spacing:3px;color:var(--amber)}
+  #modal .mRow{display:flex;justify-content:space-between;font-size:11.5px;color:var(--dim);margin:5px 0}
+  #modal .mRow b{color:var(--txt);font-weight:600}
+  #modal .mNote{color:var(--faint);font-size:10px;line-height:1.7;margin:11px 0 2px;
+                border-top:1px dashed var(--line2);padding-top:9px}
+  #modal .mBtnRow{display:flex;gap:8px;margin-top:14px}
+  #modal .mBtnRow button{flex:1;background:none;border:1px solid var(--line2);color:var(--dim);
+       font-family:inherit;font-size:10.5px;letter-spacing:2px;padding:9px 0;cursor:pointer}
+  #mCancel:hover{color:var(--txt);border-color:var(--dim)}
+  #mConfirm{border-color:var(--amber)!important;color:var(--amber)!important}
+  #mConfirm:hover{background:var(--amber);color:var(--bg0)!important}
+
+  /* ---------- MINE ARCHIVE PAGE ---------- */
+  #minesPage{position:fixed;inset:0;z-index:80;background:rgba(8,7,5,.93);
+             display:flex;flex-direction:column;padding:26px 30px 22px}
+  .mpHead{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+  .mpHead h2{margin:0;font-size:17px;letter-spacing:7px;color:var(--amber);font-weight:700}
+  .mpCount{color:var(--faint);font-size:11px;letter-spacing:2px}
+  .mpHead button{background:none;border:1px solid var(--line2);color:var(--dim);
+       font-family:inherit;font-size:10px;letter-spacing:2px;padding:8px 14px;cursor:pointer}
+  .mpHead button:hover{color:var(--txt);border-color:var(--dim)}
+  #mpSave{border-color:var(--amber)!important;color:var(--amber)!important}
+  #mpSave:hover{background:var(--amber);color:var(--bg0)!important}
+  #mpClose{margin-left:auto}
+  #mpGrid{flex:1;overflow-y:auto;display:grid;
+          grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px;
+          align-content:start;padding-right:8px}
+  #mpGrid::-webkit-scrollbar{width:10px}
+  #mpGrid::-webkit-scrollbar-thumb{background:var(--line2)}
+  .mCard{background:linear-gradient(165deg,var(--bg2),var(--bg1));
+         border:1px solid var(--line);display:flex;flex-direction:column}
+  .mCard.cur{border-color:var(--amber)}
+  .mShotWrap{position:relative}
+  .mShot{width:100%;aspect-ratio:16/10;display:block;background:var(--bg0);
+         border-bottom:1px solid var(--line);object-fit:cover}
+  .mShot.mRender{display:flex;align-items:center;justify-content:center;
+                 color:var(--faint);font-size:10px;letter-spacing:3px}
+  .mChip{position:absolute;top:7px;font-size:8.5px;letter-spacing:1.5px;padding:3px 7px;
+         background:rgba(5,4,3,.8);border:1px solid var(--line2);color:var(--dim)}
+  .mChip.def{left:7px;border-color:var(--amber);color:var(--amber)}
+  .mChip.cur2{right:7px}
+  .mMeta{padding:9px 11px 10px;display:flex;flex-direction:column;gap:6px;flex:1}
+  .mMeta b{font-size:12.5px;font-weight:600}
+  .mMeta b input{width:100%;background:var(--bg0);border:1px solid var(--line2);
+       color:var(--txt);font:inherit;font-size:12.5px;padding:3px 5px}
+  .mMeta small{color:var(--faint);font-size:9.5px;letter-spacing:1.2px}
+  .mbtns{display:flex;gap:5px;margin-top:auto}
+  .mbtns button{flex:1;background:none;border:1px solid var(--line2);color:var(--dim);
+       font-family:inherit;font-size:9px;letter-spacing:1px;padding:6px 0;cursor:pointer}
+  .mbtns button:hover{color:var(--txt);border-color:var(--dim)}
+  .mbtns button.defOn{border-color:var(--amber);color:var(--amber)}
+  .mpEmpty{grid-column:1/-1;color:var(--faint);font-size:11px;letter-spacing:2px;
+           text-align:center;padding:60px 0;border:1px dashed var(--line2)}
+
   #vig{position:fixed;inset:0;pointer-events:none;z-index:5;
        background:radial-gradient(ellipse at 62% 45%,transparent 52%,rgba(0,0,0,.45) 100%)}
 
@@ -218,6 +277,25 @@
 </div>
 <div id="frenzy" class="hidden">FRENZY ×7 — <span id="frenzyT">30</span>s</div>
 <div id="toasts"></div>
+<div id="modal" class="hidden">
+  <div class="mBox">
+    <h3>COLLAPSE MINE</h3>
+    <div id="mBody"></div>
+    <div class="mBtnRow">
+      <button id="mCancel">CANCEL</button>
+      <button id="mConfirm">COLLAPSE</button>
+    </div>
+  </div>
+</div>
+<div id="minesPage" class="hidden">
+  <div class="mpHead">
+    <h2>MINE ARCHIVE</h2>
+    <span class="mpCount" id="mpCount"></span>
+    <button id="mpSave">SAVE CURRENT SEAM</button>
+    <button id="mpClose">CLOSE</button>
+  </div>
+  <div id="mpGrid"></div>
+</div>
 <div id="ui">
   <header>
     <h1>STRATA</h1>
@@ -229,7 +307,7 @@
     <h2>Collapse</h2>
     <div id="prestige">
       <div id="prHeader"><b id="coreCount">0 cores</b><span id="coreMult"></span></div>
-      <button id="collapseBtn" disabled>Requires 1e12 lifetime ores</button>
+      <button id="collapseBtn" disabled>run 0 / 1e12 ores</button>
       <div id="perks"></div>
       <button id="autoBtn" class="hidden">AUTO-BUY: ON</button>
     </div>
@@ -238,6 +316,7 @@
       <button data-t="blds" class="on">Machinery</button>
       <button data-t="tree">Research</button>
       <button data-t="achs">Unlocks</button>
+      <button data-t="mines">Mines</button>
     </div>
     <div id="tab-blds">
       <div id="tierStrip"></div>
@@ -252,6 +331,7 @@
       <div id="achPages"></div>
       <div id="achs"></div>
     </div>
+    <div id="tab-mines" style="display:none"></div>
   </div>
 </div>
 
@@ -502,6 +582,9 @@ const S={
   cores:0,
   collapses:0,
   tetrN:0,             // stacked tower layers from tetration research
+  runTotal:num(0),     // ores earned since last collapse (drives the requirement)
+  mines:[],            // saved seam library: {id,name,seed}
+  defaultSeed:0,       // seam regenerated on every collapse when set
   autobuy:true,
   frenzyUntil:0,
   seed:0,              // hidden world seed — drives all procedural generation
@@ -516,7 +599,8 @@ function hasPerk(id){ const p=PERKS.find(x=>x.id===id); return S.cores>=p.at; }
 function frenzyMult(){ return performance.now()<S.frenzyUntil ? num(7) : num(1); }
 function coreMult(){
   if(S.cores<=0) return num(1);
-  let m=BN.fromLog10(S.cores*Math.log10(1.05));
+  // linear: x2 PER CORE — 1 core = x2, 2 = x4, 3 = x6, 10 = x20
+  let m=BN.fromLog10(Math.log10(S.cores)+Math.log10(2));
   if(hasPerk('p3')) m=m.pow(1.05);
   return m;
 }
@@ -663,27 +747,43 @@ function applyResearch(u){
   rebuildResCache();
 }
 
-/* ============ PRESTIGE ============ */
-const PR_REQ=1e12;
-function canCollapse(){ return S.total.gte(PR_REQ); }
-function coresOnCollapse(){
-  // insane levels: tetration-scale lifetime ore pours out cores exponentially —
-  // layer 2 -> 10^4, layer 5 -> 10^10, layer 50 -> 10^100, capped at 10^300
-  if(S.total.L>=2) return Math.min(1e300, Math.floor(Math.pow(10, Math.min(2*S.total.L,300))));
-  return Math.max(1, Math.floor(S.total.log10i()-11));
+/* ============ PRESTIGE ============
+   Collapse pays out CORES bought in bulk: the 1st core costs 1e12, each next
+   core costs x1.15 the one before (cumulative geometric sum). Bank a huge run
+   and one collapse can buy thousands of cores. Every core owned = x2 gains. */
+const PR_REQ=1e12;   // base cost of the first core; resets after every collapse
+function collapseReq(){ return num(PR_REQ); }
+function canCollapse(){ return S.runTotal.gte(PR_REQ); }
+function coresAffordable(rt){
+  if(rt.L>=2) return 1e300;                    // tower-scale run: effectively unlimited
+  const lg=rt.log10i();
+  if(lg<12) return 0;
+  if(lg>620) return 1e300;                     // beyond double-precision solving
+  const v=Math.pow(10,lg-12);                  // rt / 1e12
+  const n=Math.floor(Math.log(v*.15+1)/Math.log(1.15));   // geometric-series solve
+  return Math.max(0,Math.min(1e300,n));
+}
+function coresCost(n){
+  // total price of n cores: 1e12 * (1.15^n - 1) / 0.15
+  if(n<=0) return num(0);
+  if(n<2000) return num(1e12*(Math.pow(1.15,n)-1)/.15);
+  return BN.fromLog10(12+n*Math.log10(1.15)-Math.log10(.15));   // asymptotic
 }
 function collapse(){
   if(!canCollapse()) return;
-  const g=coresOnCollapse();
-  S.cores+=g; S.collapses++;
+  const n=coresAffordable(S.runTotal);          // cores bought this collapse
+  const cost=coresCost(n);                      // cumulative price paid
+  S.cores+=n; S.collapses++;
+  S.runTotal=S.runTotal.minus(cost);            // bulk purchase; leftover carries
+  if(S.runTotal.s<0) S.runTotal=num(0);
   S.ores=num(0); S.b={}; S.up=new Set(); S.mult=num(1); S.tetrN=0;
   S.clickBase=num(1); S.clickCpsPct=0; S.frenzyUntil=0;
   despawnGolden();
   dirtyCPS(); rebuildResCache();
-  S.seed=(Math.random()*2147483647)|0;   // new seam — new world
+  S.seed=S.defaultSeed||((Math.random()*2147483647)|0);   // default mine, or new seam
   rebuildWorld();
   curTier=0; buildTierStrip(); buildMachineryPage();
-  toast('MINE COLLAPSED — +'+g.toLocaleString()+' cores · NEW SEAM FOUND','gold');
+  toast('MINE COLLAPSED — +'+n.toLocaleString()+' cores · '+(S.defaultSeed?'DEFAULT SEAM RESTORED':'NEW SEAM FOUND'),'gold');
   save(); refreshUI();
 }
 
@@ -831,6 +931,7 @@ function save(){
       frenzies:S.frenzies, luckies:S.luckies, reloads:S.reloads,
       offCollected:S.offCollected, shiftBuys:S.shiftBuys,
       cores:S.cores, collapses:S.collapses, tetrN:S.tetrN, autobuy:S.autobuy, seed:S.seed,
+      runTotal:S.runTotal, mines:S.mines, defaultSeed:S.defaultSeed,
       b:S.b, up:[...S.up], ach:[...S.ach],
     });
     try{ localStorage.setItem(SAVE_KEY,json); }catch(e){ /* quota — mirror still below */ }
@@ -845,6 +946,9 @@ function applySaveData(d){
   S.frenzies=d.frenzies||0; S.luckies=d.luckies||0; S.reloads=(d.reloads||0)+1;
   S.offCollected=d.offCollected||0; S.shiftBuys=d.shiftBuys||0;
   S.cores=d.cores||0; S.collapses=d.collapses||0; S.tetrN=d.tetrN||0; S.autobuy=d.autobuy!==false;
+  S.runTotal=d.runTotal? rvBN(d.runTotal) : rvBN(d.total);   // legacy: carry lifetime
+  S.mines=Array.isArray(d.mines)? d.mines : [];
+  S.defaultSeed=d.defaultSeed||0;
   S.seed=d.seed||0;
   S.b=d.b||{}; S.up=new Set(d.up||[]); S.ach=new Set(d.ach||[]);
   dirtyCPS(); rebuildResCache();
@@ -852,7 +956,7 @@ function applySaveData(d){
   const el=Math.min((Date.now()-d.t)/1000, cap);
   if(el>10){
     const g=gainAuto().mul(el);
-    if(g.gt(0)){ S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.offCollected++;
+    if(g.gt(0)){ S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g); S.offCollected++;
       toast('AWAY '+Math.floor(el/60)+' MIN — +'+g.fmt()+' ores'); }
   }
 }
@@ -1538,7 +1642,7 @@ function goldenClick(){
   }else{
     S.luckies++;
     const g=gainAuto().mul(600*resCache.goldMul).plus(S.ores.mul(0.15)).plus(25);
-    S.ores=S.ores.plus(g); S.total=S.total.plus(g);
+    S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g);
     toast('LUCKY STRIKE — +'+g.fmt()+' ores','gold');
     spawnPopup(g.fmt(),{x:innerWidth/2,y:innerHeight/2});
   }
@@ -1579,7 +1683,7 @@ addEventListener('pointerdown',e=>{
   const h=hits[0];
   if(h.object===golden){ goldenClick(); return; }
   const g=gainPerClick();
-  S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.clicks++;
+  S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g); S.clicks++;
   spawnPopup(g.fmt(),{x:e.clientX,y:e.clientY});
   burst(h.point,10);
   W.core.scale.setScalar(CV.scale*.72);
@@ -1674,6 +1778,141 @@ function buildAchPages(){
   el.innerHTML=html;
   [...el.children].forEach(b=>b.onclick=()=>{ curAchPage=+b.dataset.p; buildAchPages(); $('achs')._k=''; refreshUI(); });
 }
+
+/* ============ MINE ARCHIVE — dedicated page with live-rendered previews ============ */
+const MINE_ADJ=['Whispering','Gilded','Hollow','Sunken','Crooked','Silent','Weeping','Ember','Frost','Shadowed','Iron','Copper','Salted','Blind','Restless','Ancient','Nameless','Ragged','Veiled','Drowned','Sleeping','Starved','Gloomy','Glittering','Forgotten','Patient','Humming','Blank','Jagged','Buried','Bitter','Lucky','Deep','Pale','Quiet','Rusted','Frozen','Molten','Wandering','Grinning'];
+const MINE_NOUN=['Shaft','Hollow','Pit','Seam','Drift','Winze','Stope','Adit','Level','Vein','Lode','Chamber','Gallery','Crosscut','Raise','Bench','Face','Cavern','Tunnel','Workings','Claim','Digging','Collar','Sump','Manway','Cuy'];
+function mineName(){
+  for(let t=0;t<24;t++){
+    const nm=(Math.random()<.55?'The ':'')+MINE_ADJ[(Math.random()*MINE_ADJ.length)|0]+' '+MINE_NOUN[(Math.random()*MINE_NOUN.length)|0];
+    if(!S.mines.some(m=>m.name===nm)) return nm;
+  }
+  return 'Seam № '+(1000+((Math.random()*9000)|0));
+}
+const mineShots={};   // seed -> dataURL thumbnail (in-memory cache)
+function palOf(seed){ const r=mulberry32(seed); return PALETTES[(r()*PALETTES.length)|0]; }
+
+/* offscreen thumbnail of a saved seam: temporary rebuild + tiny render + restore */
+function shootWorld(seed){
+  const cur=S.seed;
+  const oldPos=cam.position.clone(), oldTgt=controls.target.clone();
+  if(seed!==cur){ S.seed=seed; rebuildWorld(); }
+  const a=(seed%628)/100;                          // seeded, consistent framing per mine
+  cam.position.set(Math.cos(a)*13, 6.5+Math.sin(a*2)*.6, Math.sin(a)*13);
+  cam.lookAt(0,1.5,0);
+  cam.aspect=264/165; cam.updateProjectionMatrix();
+  const oldPR=renderer.getPixelRatio();
+  renderer.setPixelRatio(1);
+  renderer.setSize(264,165,false);
+  renderer.render(scene,cam);
+  let url='';
+  try{ url=renderer.domElement.toDataURL('image/jpeg',.82); }catch(e){}
+  renderer.setPixelRatio(oldPR);
+  renderer.setSize(innerWidth,innerHeight,false);
+  cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();
+  cam.position.copy(oldPos); controls.target.copy(oldTgt); controls.update();
+  if(seed!==cur){ S.seed=cur; rebuildWorld(); }
+  return url;
+}
+function renderMinesPage(){
+  const grid=document.getElementById('mpGrid');
+  document.getElementById('mpCount').textContent=S.mines.length+' SEAMS';
+  if(!S.mines.length){
+    grid.innerHTML='<div class="mpEmpty">NO SAVED MINES<br>SAVE THIS SEAM BEFORE IT COLLAPSES</div>';
+    return;
+  }
+  grid.innerHTML=S.mines.map(m=>{
+    const cur=m.seed===S.seed, def=S.defaultSeed===m.seed;
+    const shot=mineShots[m.seed];
+    const pal=palOf(m.seed);
+    return '<div class="mCard'+(cur?' cur':'')+'" data-id="'+m.id+'">'+
+      '<div class="mShotWrap">'+
+        (shot? '<img class="mShot" src="'+shot+'">' : '<div class="mShot mRender">RENDERING…</div>')+
+        (def?'<span class="mChip def">DEFAULT</span>':'')+(cur?'<span class="mChip cur2">CURRENT</span>':'')+
+      '</div>'+
+      '<div class="mMeta">'+
+        '<b class="mname">'+m.name+'</b>'+
+        '<small>SEAM № '+String(m.seed%10000).padStart(4,'0')+' · <i style="color:#'+new THREE.Color(pal.core).getHexString()+'">●</i></small>'+
+        '<div class="mbtns">'+
+        '<button data-a="load">LOAD</button>'+
+        '<button data-a="def"'+(def?' class="defOn"':'')+'>DEF</button>'+
+        '<button data-a="ren">REN</button>'+
+        '<button data-a="del">DEL</button></div>'+
+      '</div></div>';
+  }).join('');
+}
+function openMinesPage(){
+  document.getElementById('minesPage').classList.remove('hidden');
+  renderMinesPage();
+  const pending=S.mines.filter(m=>!mineShots[m.seed]);
+  let i=0;
+  const step=()=>{
+    const pg=document.getElementById('minesPage');
+    if(!pg||pg.classList.contains('hidden')) return;
+    if(i>=pending.length) return;
+    const m=pending[i++];
+    mineShots[m.seed]=shootWorld(m.seed);
+    renderMinesPage();
+    setTimeout(step,30);
+  };
+  if(pending.length) setTimeout(step,60);
+}
+function closeMinesPage(){ document.getElementById('minesPage').classList.add('hidden'); }
+function saveMine(){
+  if(S.mines.some(x=>x.seed===S.seed)){ toast('SEAM ALREADY IN LIBRARY'); return; }
+  const m={id:Date.now(),name:mineName(),seed:S.seed};
+  S.mines.push(m);
+  mineShots[m.seed]=shootWorld(m.seed);   // instant thumbnail
+  renderMinesPage(); save();
+  toast('MINE SAVED — '+m.name);
+}
+function startRename(id){
+  const card=document.querySelector('.mCard[data-id="'+id+'"]'); if(!card) return;
+  const m=S.mines.find(x=>x.id===id); if(!m) return;
+  const b=card.querySelector('.mname');
+  const inp=document.createElement('input');
+  inp.value=m.name; inp.maxLength=26;
+  b.textContent=''; b.appendChild(inp);
+  inp.focus(); inp.select();
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') inp.blur(); });
+  inp.addEventListener('blur',()=>{
+    const v=inp.value.trim();
+    if(v) m.name=v;
+    renderMinesPage(); save();
+  });
+}
+{
+  document.getElementById('mpClose').onclick=closeMinesPage;
+  document.getElementById('mpSave').onclick=saveMine;
+  document.getElementById('mpGrid').addEventListener('click',e=>{
+    const btn=e.target.closest('button[data-a]');
+    if(!btn) return;
+    const card=btn.closest('.mCard'); if(!card) return;
+    const id=+card.dataset.id;
+    const m=S.mines.find(x=>x.id===id); if(!m) return;
+    const a=btn.dataset.a;
+    if(a==='load'){
+      S.seed=m.seed; rebuildWorld(); renderMinesPage(); save();
+      closeMinesPage();
+      toast('MINE LOADED — '+m.name);
+    }else if(a==='def'){
+      S.defaultSeed=(S.defaultSeed===m.seed?0:m.seed);
+      renderMinesPage(); save();
+      toast(S.defaultSeed?('DEFAULT MINE — '+m.name+' REGENERATES ON COLLAPSE'):'DEFAULT MINE CLEARED');
+    }else if(a==='ren') startRename(id);
+    else if(a==='del'){
+      S.mines=S.mines.filter(x=>x.id!==id);
+      if(S.defaultSeed===m.seed) S.defaultSeed=0;
+      renderMinesPage(); save();
+      toast('MINE REMOVED');
+    }
+  });
+  addEventListener('keydown',e=>{
+    if(e.key!=='Escape') return;
+    const pg=document.getElementById('minesPage');
+    if(pg&&!pg.classList.contains('hidden')) closeMinesPage();
+  });
+}
 const tabBtns=[...document.querySelectorAll('#tabs button')];
 function showTab(t){
   tabBtns.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
@@ -1682,12 +1921,41 @@ function showTab(t){
   });
   refreshUI();
 }
-tabBtns.forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+tabBtns.forEach(b=>b.onclick=()=>{
+  if(b.dataset.t==='mines'){ openMinesPage(); return; }   // the archive is its own page
+  showTab(b.dataset.t);
+});
 document.getElementById('collapseBtn').onclick=()=>{
   if(!canCollapse()) return;
-  if(confirm('Collapse the mine?\n\nResets ores, machinery and research.\nKeeps: cores, achievements, lifetime total.\nGAIN: +'+coresOnCollapse().toLocaleString()+' cores\nA brand-new seeded seam will be generated.'))
-    collapse();
+  openCollapseModal();
 };
+{
+  const modalEl=document.getElementById('modal');
+  window.openCollapseModal=function(){
+    const n=coresAffordable(S.runTotal);
+    const cost=coresCost(n);
+    const after=S.cores+n;
+    const gainMult=BN.fromLog10(Math.log10(after)+Math.log10(2));   // linear 2x per core
+    const left=S.runTotal.minus(cost); if(left.s<0) left=num(0);
+    const nextCore=num(1e12);                     // requirement resets after collapse
+    document.getElementById('mBody').innerHTML=
+      '<div class="mRow"><span>RUN EARNINGS</span><b>'+S.runTotal.fmt()+'</b></div>'+
+      '<div class="mRow"><span>CORES GAINED</span><b>+'+n.toLocaleString()+'</b></div>'+
+      '<div class="mRow"><span>TOTAL COST</span><b>'+cost.fmt()+'</b></div>'+
+      '<div class="mRow"><span>GAIN MULT AFTER</span><b>×'+gainMult.fmt()+'</b></div>'+
+      '<div class="mRow"><span>LEFTOVER RUN ORE</span><b>'+left.fmt()+'</b></div>'+
+      '<div class="mNote">RESETS — ores, machinery, research, tower layers<br>'+
+      'KEEPS — cores, unlocks, saved mines, default seam<br>'+
+      'EVERY CORE OWNED = ×2 GAINS · each core costs 1.15× the last, bought in bulk from this run<br>'+
+      'NEXT CORE AFTER COLLAPSE — '+nextCore.fmt()+' (requirement resets)<br>'+
+      'NEXT SEAM — '+(S.defaultSeed?('your default: '+(S.mines.find(x=>x.seed===S.defaultSeed)||{name:'saved mine'}).name):'random')+'</div>';
+    modalEl.classList.remove('hidden');
+  };
+  document.getElementById('mCancel').onclick=()=>modalEl.classList.add('hidden');
+  document.getElementById('mConfirm').onclick=()=>{ modalEl.classList.add('hidden'); collapse(); };
+  modalEl.addEventListener('click',e=>{ if(e.target===modalEl) modalEl.classList.add('hidden'); });
+  addEventListener('keydown',e=>{ if(e.key==='Escape') modalEl.classList.add('hidden'); });
+}
 document.getElementById('autoBtn').onclick=()=>{
   S.autobuy=!S.autobuy;
   document.getElementById('autoBtn').textContent='AUTO-BUY: '+(S.autobuy?'ON':'OFF');
@@ -1718,8 +1986,8 @@ function refreshUI(){
   putT($('coreMult'),'all ×'+coreMult().fmt());
   const cb=$('collapseBtn');
   putT(cb,canCollapse()
-    ? 'COLLAPSE MINE  +'+coresOnCollapse().toLocaleString()+' cores'
-    : (S.collapses>0?('needs '+num(PR_REQ).fmt()+' lifetime'):'requires 1e12 lifetime ores'));
+    ? 'COLLAPSE MINE  +'+coresAffordable(S.runTotal).toLocaleString()+' cores'
+    : 'run '+S.runTotal.fmt()+' / '+num(PR_REQ).fmt());
   cb.disabled=!canCollapse();
   putH($('perks'),PERKS.map(p=>{
     const on=S.cores>=p.at;
@@ -2069,7 +2337,7 @@ function tick(now){
 
   frames++;
   const g=gainAuto().mul(dt);
-  S.ores=S.ores.plus(g); S.total=S.total.plus(g);
+  S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g);
 
   animateWorld(now,dt,fr);
 
