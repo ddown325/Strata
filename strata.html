@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>STRATA</title>
+<style>
+  :root{
+    --bg0:#0e0c09; --bg1:#16130e; --bg2:#1d1913;
+    --line:#2c2519; --line2:#3a3122;
+    --txt:#d8d1c0; --dim:#8b8171; --faint:#5c5546;
+    --amber:#d99a3d; --good:#8aa668; --bad:#b0603f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;overflow:hidden;background:var(--bg0);color:var(--txt);
+       font-family:ui-monospace,'Cascadia Mono','JetBrains Mono',Consolas,monospace;
+       font-variant-numeric:tabular-nums;font-size:13px}
+  canvas{display:block}
+
+  #hud{position:fixed;top:0;right:0;text-align:right;padding:18px 20px;z-index:10;pointer-events:none}
+  #ores{margin:0;font-size:26px;color:var(--amber);font-weight:700;letter-spacing:.5px}
+  #cps{color:var(--dim);font-size:12px;margin-top:5px}
+  #layer{color:var(--faint);font-size:11px;margin-top:3px;letter-spacing:2px;text-transform:uppercase}
+  #layer.tetr{color:var(--amber)}
+
+  #ui{position:fixed;top:0;left:0;height:100vh;width:344px;z-index:10;
+      background:var(--bg1);border-right:1px solid var(--line);
+      display:flex;flex-direction:column}
+  #ui .scroll{overflow-y:auto;overscroll-behavior:contain;padding:0 14px 20px;flex:1}
+  #ui .scroll::-webkit-scrollbar{width:10px}
+  #ui .scroll::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg1)}
+  #ui .scroll::-webkit-scrollbar-track{background:transparent}
+
+  header{padding:14px 16px 12px;border-bottom:1px solid var(--line);margin:0 -14px}
+  header h1{margin:0;font-size:18px;letter-spacing:7px;color:var(--txt);font-weight:700}
+  header .sub{color:var(--faint);font-size:10px;letter-spacing:1.5px;margin-top:3px;text-transform:uppercase}
+  #stats{background:var(--bg2);border:1px solid var(--line);padding:9px 11px;
+         font-size:12px;line-height:1.75;color:var(--dim);margin-top:14px}
+  #stats b{color:var(--txt);font-weight:600}
+
+  #tabs{display:flex;border-bottom:1px solid var(--line);margin:16px 0 10px}
+  #tabs button{flex:1;background:none;border:none;border-bottom:2px solid transparent;
+       color:var(--faint);font-family:inherit;font-size:10.5px;letter-spacing:1.5px;
+       padding:8px 0 7px;cursor:pointer;text-transform:uppercase}
+  #tabs button.on{color:var(--amber);border-bottom-color:var(--amber)}
+  #tabs button:hover{color:var(--txt)}
+
+  #tierStrip,#famStrip,#achPages{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0 8px}
+  .ts{background:var(--bg2);border:1px solid var(--line);color:var(--dim);font-family:inherit;
+      font-size:9.5px;letter-spacing:.5px;padding:4px 6px;cursor:pointer}
+  .ts:hover:not(:disabled){color:var(--txt);border-color:var(--dim)}
+  .ts.on{border-color:var(--amber);color:var(--amber)}
+  .ts.lk{opacity:.45}
+  .ts:disabled{opacity:.22;cursor:default}
+  .tierName{font-size:11px;color:var(--dim);letter-spacing:2px;margin:2px 0 8px;
+            border-bottom:1px dashed var(--line2);padding-bottom:6px}
+  .famHead{font-size:10.5px;color:var(--dim);letter-spacing:1px;margin-bottom:8px;
+           border-bottom:1px dashed var(--line2);padding-bottom:6px}
+
+  h2{font-size:10px;color:var(--dim);letter-spacing:2.5px;text-transform:uppercase;
+     margin:18px 0 8px;padding-bottom:5px;border-bottom:1px dashed var(--line2);font-weight:600}
+
+  #prestige{background:var(--bg2);border:1px solid var(--line);padding:10px 11px}
+  #prHeader{display:flex;justify-content:space-between;align-items:baseline;font-size:12px}
+  #prHeader b{color:var(--amber)}
+  #prHeader span{color:var(--dim);font-size:11px}
+  #collapseBtn{width:100%;margin-top:8px;background:none;border:1px solid var(--amber);
+       color:var(--amber);font-family:inherit;font-size:11.5px;letter-spacing:1px;
+       padding:8px 0;cursor:pointer;text-transform:uppercase}
+  #collapseBtn:hover:not(:disabled){background:var(--amber);color:var(--bg0)}
+  #collapseBtn:disabled{border-color:var(--line2);color:var(--faint);cursor:default}
+  .perk{display:flex;justify-content:space-between;font-size:11px;margin-top:6px;color:var(--faint)}
+  .perk.on{color:var(--good)}
+  .perk .pk{text-align:right;max-width:200px}
+
+  .bld{display:flex;justify-content:space-between;align-items:center;gap:10px;
+       background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--line);
+       padding:8px 11px;margin:0 0 5px;cursor:pointer;user-select:none}
+  .bld:hover{border-left-color:var(--dim);background:#211c14}
+  .bld.cant{opacity:.42;cursor:default}
+  .bld.cant:hover{border-left-color:var(--line);background:var(--bg2)}
+  .bld b{font-size:12.5px;font-weight:600}
+  .bld .owned{color:var(--amber);font-size:11px;margin-left:7px}
+  .bld small{display:block;color:var(--faint);font-size:10px;margin-top:2px}
+  .bld .cost{font-size:12px;white-space:nowrap;text-align:right;color:var(--good);line-height:1.4}
+  .bld.cant .cost{color:var(--bad)}
+  .bld .cost small{display:block;color:var(--faint);font-size:9.5px;text-align:right}
+
+  .chips{display:flex;flex-direction:column;gap:5px}
+  .chip{background:var(--bg2);border:1px solid var(--line);padding:7px 10px;
+        cursor:pointer;user-select:none;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+  .chip:hover{border-color:var(--dim)}
+  .chip.cant{opacity:.42;cursor:default}
+  .chip.cant:hover{border-color:var(--line)}
+  .chip.owned{border-color:transparent;border-left:3px solid var(--good);opacity:.5;cursor:default}
+  .chip b{font-size:12px;font-weight:600}
+  .chip small{color:var(--faint);font-size:10.5px;margin-left:8px}
+  .chip .cc{font-size:11px;color:var(--good);white-space:nowrap}
+  .chip.cant .cc{color:var(--bad)}
+
+  .ach{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--line);
+       padding:7px 10px;margin-bottom:5px;opacity:.45}
+  .ach.on{opacity:1;border-left-color:var(--amber)}
+  .ach b{font-size:12px}
+  .ach small{display:block;color:var(--faint);font-size:10.5px;margin-top:2px}
+
+  #autoBtn{width:100%;margin-top:8px;background:none;border:1px solid var(--line2);
+       color:var(--dim);font-family:inherit;font-size:10.5px;letter-spacing:1.5px;
+       padding:7px 0;cursor:pointer;text-transform:uppercase}
+  #autoBtn:hover:not(.hidden){color:var(--amber);border-color:var(--amber)}
+  #autoBtn.hidden{display:none}
+
+  #vig{position:fixed;inset:0;pointer-events:none;z-index:5;
+       background:radial-gradient(ellipse at 62% 45%,transparent 52%,rgba(0,0,0,.45) 100%)}
+
+  #frenzy{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:20;
+          background:var(--bg0);border:1px solid var(--amber);border-top:none;
+          padding:7px 22px 8px;color:var(--amber);font-size:12px;letter-spacing:2px}
+  .hidden{display:none !important}
+
+  #toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;
+          gap:6px;z-index:30;pointer-events:none}
+  .toast{background:var(--bg0);border:1px solid var(--line2);border-left:3px solid var(--dim);
+         padding:9px 13px;font-size:11.5px;max-width:320px;letter-spacing:.3px}
+  .toast.gold{border-color:var(--amber);border-left-color:var(--amber);color:var(--amber)}
+  .toast.out{opacity:0;transform:translateX(24px);transition:all .35s}
+
+  .pop{position:fixed;color:var(--amber);font-weight:700;font-size:15px;pointer-events:none;
+       transition:all .85s cubic-bezier(.2,.7,.3,1);z-index:25}
+</style>
+</head>
+<body>
+<div id="vig"></div>
+<div id="hud">
+  <h3 id="ores">0 ores</h3>
+  <div id="cps"></div>
+  <div id="layer"></div>
+</div>
+<div id="frenzy" class="hidden">FRENZY ×7 — <span id="frenzyT">30</span>s</div>
+<div id="toasts"></div>
+<div id="ui">
+  <header>
+    <h1>STRATA</h1>
+    <div class="sub">deep-core mining terminal // rev 6</div>
+  </header>
+  <div class="scroll">
+    <div id="stats"></div>
+
+    <h2>Collapse</h2>
+    <div id="prestige">
+      <div id="prHeader"><b id="coreCount">0 cores</b><span id="coreMult"></span></div>
+      <button id="collapseBtn" disabled>Requires 1e12 lifetime ores</button>
+      <div id="perks"></div>
+      <button id="autoBtn" class="hidden">AUTO-BUY: ON</button>
+    </div>
+
+    <div id="tabs">
+      <button data-t="blds" class="on">Machinery</button>
+      <button data-t="tree">Research</button>
+      <button data-t="achs">Unlocks</button>
+    </div>
+    <div id="tab-blds">
+      <div id="tierStrip"></div>
+      <div id="tierName" class="tierName"></div>
+      <div id="blds"></div>
+    </div>
+    <div id="tab-tree" style="display:none">
+      <div id="famStrip"></div>
+      <div class="chips" id="tree"></div>
+    </div>
+    <div id="tab-achs" style="display:none">
+      <div id="achPages"></div>
+      <div id="achs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Classic (non-module) scripts so the game works when opened directly from disk (file://) -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+if(!window.THREE){
+  document.body.innerHTML='<div style="padding:40px;font-family:monospace;color:#b0603f">Failed to load Three.js from CDN — check connection and reload.</div>';
+  throw new Error('THREE failed to load');
+}
+/* ================= GAME ================= */
+
+/*====BN-START====*/
+/* ============ BIG NUMBER ENGINE v2 — power-tower numerals ============
+   value = s · m · 10^(10^(10^(...^E)))   (L tens in the tower)
+   L=0  : plain double, |v| < 1e15
+   L=1  : s·m·10^E              m∈[1,10)  E∈[15,1e15)
+   L>=2 : s·m·10^(10^(...^E))   m>0 floats freely (folds are below
+          double precision, so banding m would corrupt same-tower math)
+   Layer count is unbounded (up to 9e15) → represents 10^^k for any
+   k ≤ ~9e15. Old engine was broken (mul multiplied exponents, minus
+   didn't exist, norm could loop). This one is canonical + tested.      */
+const MAXE = 1e308;   // per-layer exponent ceiling — tower values up to ~10^10^1e308, layers unbounded
+
+class BN {
+  constructor(m=0, E=0, L=0){
+    if(typeof m!=='number'||!isFinite(m)||!isFinite(E)||!isFinite(L)){ m=0;E=0;L=0; }
+    this.s = m<0 ? -1 : (m>0 ? 1 : 0);
+    this.m = Math.abs(m);
+    this.E = E; this.L = L;
+    this.norm();
+  }
+  static of(v){
+    if(v instanceof BN) return v.clone();
+    if(typeof v==='number') return new BN(v);
+    return new BN(0);
+  }
+  clone(){ const r=new BN(0); r.s=this.s; r.m=this.m; r.E=this.E; r.L=this.L; return r; }
+  static tetr(h){ // 10^^h
+    if(h<=0) return new BN(1);
+    if(h===1) return new BN(10);
+    if(h===2) return new BN(1e10);
+    if(h===3) return new BN(1,1e10,1);
+    return new BN(1,1e10,h-2);
+  }
+  static fromLog10(lg, s=1){ // 10^lg
+    if(!isFinite(lg)) return new BN(0);
+    if(lg<15) return new BN(s*Math.pow(10,lg));
+    if(lg<MAXE){
+      const r=new BN(0); r.s=s; r.L=1;
+      r.E=Math.floor(lg); r.m=Math.pow(10,lg-r.E);
+      if(r.m>=10){r.m/=10;r.E++;} else if(r.m<1){r.m*=10;r.E--;}
+      return r;
+    }
+    const r=new BN(0); r.s=s; r.L=2; r.E=Math.log10(lg); r.m=1; r.norm(); return r;
+  }
+  norm(){
+    if(!(isFinite(this.m)&&isFinite(this.E)&&isFinite(this.L))){ this.s=0;this.m=0;this.E=0;this.L=0; return; }
+    if(this.L<0) this.L=0;
+    this.L=Math.floor(this.L);
+    if(this.s===0||this.m===0){ this.s=0;this.m=0;this.E=0;this.L=0; return; }
+    if(this.L===0){
+      if(this.m<1e15){ this.E=0; return; }   // L0 band independent of MAXE
+      const lg=Math.log10(this.m);
+      this.L=1; this.E=Math.floor(lg); this.m=Math.pow(10,lg-this.E);
+      if(this.m>=10){this.m/=10;this.E++;} else if(this.m<1){this.m*=10;this.E--;}
+      return;
+    }
+    if(this.L===1){
+      const total=this.E+Math.log10(this.m); // = log10|value|
+      if(total>=MAXE){ this.L=2; this.E=Math.log10(total); this.m=1; } // fall through
+      else if(total<15){ this.L=0; this.m=Math.pow(10,total); this.E=0; return; }
+      else {
+        this.E=Math.floor(total); this.m=Math.pow(10,total-this.E);
+        if(this.m>=10){this.m/=10;this.E++;} else if(this.m<1){this.m*=10;this.E--;}
+        return;
+      }
+    }
+    // L>=2: mantissa is NOT banded — folds into the tower are below double
+    // precision, so forcing m into [1,10) would inflate same-tower values.
+    // m compares directly within equal (L,E); E dominates otherwise.
+    let g=0;
+    while(this.E>=MAXE && g++<10){ this.L++; this.E=Math.log10(this.E); }
+    g=0;
+    while(this.L>=2 && this.E<15 && g++<60){ this.L--; this.E=Math.pow(10,this.E); }
+    if(this.L===1){
+      const total=this.E+Math.log10(this.m);
+      if(total<15){ this.L=0; this.m=Math.pow(10,total); this.E=0; }
+      else {
+        this.E=Math.floor(total); this.m=Math.pow(10,total-this.E);
+        if(this.m>=10){this.m/=10;this.E++;} else if(this.m<1){this.m*=10;this.E--;}
+      }
+    }
+    if(this.E>=MAXE){ this.L++; this.E=Math.log10(this.E); }
+  }
+  log10i(){ // approximate log10 of |value| (Infinity past layer 2)
+    if(this.s===0) return -Infinity;
+    if(this.L===0) return Math.log10(this.m);
+    if(this.L===1) return this.E+Math.log10(this.m);
+    return Infinity;
+  }
+  _cmpmag(o){
+    if(this.L!==o.L) return this.L-o.L;
+    if(this.L===0) return this.m-o.m;
+    if(this.E!==o.E) return this.E-o.E;
+    return this.m-o.m;
+  }
+  cmp(o){ o=BN.of(o); if(this.s!==o.s) return this.s-o.s; return this.s*this._cmpmag(o); }
+  gt(o){return this.cmp(o)>0} lt(o){return this.cmp(o)<0}
+  gte(o){return this.cmp(o)>=0} lte(o){return this.cmp(o)<=0} eq(o){return this.cmp(o)===0}
+  plus(o){
+    o=BN.of(o);
+    if(this.s===0) return o.clone();
+    if(o.s===0) return this.clone();
+    let r;
+    if(this.s===o.s){ r=this._addmag(o); r.s=this.s; }
+    else{
+      const c=this._cmpmag(o);
+      if(c===0) return new BN(0);
+      if(c>0){ r=this._submag(o); r.s=this.s; }
+      else{ r=o._submag(this); r.s=o.s; }
+    }
+    return r;
+  }
+  neg(){ const r=this.clone(); r.s=-r.s; return r; }
+  minus(o){ return this.plus(BN.of(o).neg()); }
+  _addmag(o){ // |this|,|o| > 0, result magnitude of sum
+    if(this.L===0&&o.L===0) return new BN(this.m+o.m);
+    const c=this._cmpmag(o);
+    const big=c>=0?this:o, small=c>=0?o:this;
+    if(big.L===1){
+      if(small.L===0){
+        if(big.E-Math.log10(small.m)>15) return big.clone();
+        const r=big.clone(); r.m+=small.m*Math.pow(10,-big.E); r.norm(); return r;
+      }
+      if(big.E-small.E>15) return big.clone();
+      const r=big.clone(); r.m+=small.m*Math.pow(10,small.E-big.E); r.norm(); return r;
+    }
+    if(small.L===big.L && small.E===big.E){ const r=big.clone(); r.m+=small.m; r.norm(); return r; }
+    return big.clone(); // layer>=2 absorbs anything not exactly aligned
+  }
+  _submag(o){ // assumes |this|>|o|
+    if(this.L===0) return new BN(this.m-o.m);
+    if(this.L===1){
+      if(o.L===0){
+        if(this.E-Math.log10(o.m)>15) return this.clone();
+        const r=this.clone(); r.m-=o.m*Math.pow(10,-this.E); r.norm(); return r;
+      }
+      if(this.E-o.E>15) return this.clone();
+      const r=this.clone(); r.m-=o.m*Math.pow(10,o.E-this.E); r.norm(); return r;
+    }
+    if(o.L===this.L && o.E===this.E){ const r=this.clone(); r.m-=o.m; r.norm(); return r; }
+    return this.clone();
+  }
+  mul(o){
+    o=BN.of(o);
+    if(this.s===0||o.s===0) return new BN(0);
+    const s=this.s*o.s;
+    let r;
+    if(this.L===0&&o.L===0){
+      r=new BN(this.m*o.m); // <1e30, norm promotes if >=1e15
+    }else if(this.L===0||o.L===0){
+      const p=this.L===0?this:o, b=this.L===0?o:this;
+      r=b.clone(); r.m*=p.m; r.norm();
+    }else if(this.L===1&&o.L===1){
+      r=BN.fromLog10(Math.log10(this.m*o.m)+this.E+o.E);   // overflow-safe: no E+E double blowup
+    }else if(this.L===1||o.L===1){
+      const a=this.L===1?this:o, b=this.L===1?o:this; // b.L>=2
+      const x=Math.pow(10, Math.log10(a.E)-b.E);      // a.E/10^b.E ∈ (0,1]
+      r=b.clone();
+      r.E=b.E+(x<1e-15?0:Math.log10(1+x));
+      r.m*=a.m; r.norm();
+    }else{
+      // both L>=2: dominant by LAYER first, then E
+      let hi,lo;
+      if(this.L===o.L){ hi=this.E>=o.E?this:o; lo=this.E>=o.E?o:this; }
+      else if(this.L>o.L){ hi=this; lo=o; }
+      else{ hi=o; lo=this; }
+      r=hi.clone();
+      if(hi.L===lo.L){
+        const d=hi.E-lo.E;
+        r.E=hi.E+(d>=15?0:Math.log10(1+Math.pow(10,-d)));
+      } // else: lower layer's exponent contribution is below precision — dropped
+      r.m=this.m*o.m; r.norm();
+    }
+    r.s=s;
+    return r;
+  }
+  recip(){
+    if(this.s===0) return new BN(0);
+    if(this.L===0){ const r=new BN(1/this.m); r.s=this.s; return r; }
+    if(this.L===1){ const r=new BN((1/this.m)*Math.pow(10,-this.E)); r.s=this.s; return r; }
+    return new BN(0); // 1/10^tower underflows the engine's range
+  }
+  div(o){ o=BN.of(o); return this.mul(o.recip()); }
+  pow(k){
+    if(typeof k!=='number'||!isFinite(k)) return new BN(0);
+    if(k===0) return new BN(1);
+    if(k<0) return this.pow(-k).recip();
+    if(this.s===0) return new BN(0);
+    const s=this.s<0?(Number.isInteger(k)&&k%2===1?-1:1):this.s;
+    if(this.L===0){
+      const v=Math.pow(this.m,k);
+      if(isFinite(v)&&v<MAXE) return new BN(s<0?-v:v);
+      return BN.fromLog10(k*Math.log10(this.m), s);
+    }
+    if(this.L===1) return BN.fromLog10((this.E+Math.log10(this.m))*k, s);
+    // L>=2: (m·10^T)^k = 10^frac(k·log10 m) · 10^(10^(E+log10 k))
+    const kl=k*Math.log10(this.m);
+    const r=this.clone();
+    r.E=this.E+Math.log10(k);
+    r.m=Math.pow(10, kl-Math.floor(kl));
+    r.s=s; r.norm();
+    return r;
+  }
+  toNum(){ if(this.L===0) return this.s*this.m; return this.s*Infinity; }
+  fmt(){
+    if(this.s===0) return '0';
+    const sg=this.s<0?'-':'';
+    if(this.L===0){
+      const v=this.m;
+      if(v<1000) return sg+(v<10?v.toFixed(1):v.toFixed(0));
+      return sg+v.toLocaleString(undefined,{maximumFractionDigits:0});
+    }
+    if(this.L===1) return sg+this.m.toFixed(2)+'e'+Math.floor(this.E).toLocaleString();
+    const Ls=this.L>=1e6 ? this.L.toExponential(3) : this.L;   // hyper-towers: 10^^(1.0e+300)
+    return sg+'[10^^'+Ls+'] '+this.m.toFixed(2)+'e'+Math.floor(this.E).toLocaleString();
+  }
+}
+function num(v){ return BN.of(v); }
+/*====BN-END====*/
+
+/* ================= GAME STATE ================= */
+const S={
+  ores:num(0),
+  total:num(0),
+  clicks:0,
+  goldenClicks:0,
+  frenzies:0,
+  luckies:0,
+  reloads:0,
+  offCollected:0,
+  shiftBuys:0,
+  clickBase:num(1),
+  clickCpsPct:0,
+  mult:num(1),
+  cores:0,
+  collapses:0,
+  tetrN:0,             // stacked tower layers from tetration research
+  autobuy:true,
+  frenzyUntil:0,
+  seed:0,              // hidden world seed — drives all procedural generation
+  b:{}, up:new Set(), ach:new Set(),
+};
+const PERKS=[
+  {id:'p1', at:50,  name:'Foreman',        desc:'auto-buys cheapest machinery'},
+  {id:'p2', at:150, name:'Deep Memory',    desc:'offline 24h, goldens 2x often'},
+  {id:'p3', at:400, name:'Transcendence',  desc:'ALL gains ^1.05'},
+];
+function hasPerk(id){ const p=PERKS.find(x=>x.id===id); return S.cores>=p.at; }
+function frenzyMult(){ return performance.now()<S.frenzyUntil ? num(7) : num(1); }
+function coreMult(){
+  if(S.cores<=0) return num(1);
+  let m=BN.fromLog10(S.cores*Math.log10(1.05));
+  if(hasPerk('p3')) m=m.pow(1.05);
+  return m;
+}
+function coreLayers(){ return S.cores>1 ? Math.min(45, Math.floor(Math.log10(S.cores)/6.5)) : 0; }
+function effMult(){
+  const t=BN.tetr(S.tetrN+coreLayers());   // research towers + insane-core layers stack
+  return S.mult.mul(coreMult()).mul(frenzyMult()).mul(resCache.allMul).mul(t);
+}
+let _cpsCache=null;
+function baseCPS(){
+  if(_cpsCache) return _cpsCache;
+  let t=num(0);
+  for(const b of BUILDINGS){ const n=S.b[b.id]||0; if(n) t=t.plus(b.cps.mul(num(n))); }
+  _cpsCache=t; return t;
+}
+function dirtyCPS(){ _cpsCache=null; }
+function gainAuto(){ return baseCPS().mul(effMult()); }
+function gainPerClick(){ return S.clickBase.mul(effMult()).mul(resCache.clickMul).plus(gainAuto().mul(S.clickCpsPct+resCache.cpsPct)); }
+function bTotal(){ let t=0; for(const k in S.b) t+=S.b[k]; return t; }
+function bKinds(){ return Object.keys(S.b).length; }
+function tierReached(t){ const p='t'+String(t).padStart(2,'0')+'m'; return BUILDINGS.some(b=>b.id.startsWith(p)&&S.b[b.id]>0); }
+function tierKinds(t){ const p='t'+String(t).padStart(2,'0')+'m'; let c=0; for(const b of BUILDINGS) if(b.id.startsWith(p)&&S.b[b.id]>0) c++; return c; }
+function maxMachine(){ let m=0; for(const k in S.b) if(S.b[k]>m) m=S.b[k]; return m; }
+function unlockedTier(t){
+  if(t===0) return true;
+  const p='t'+String(t).padStart(2,'0')+'m';
+  return BUILDINGS.some(b=>b.id.startsWith(p)&&S.b[b.id]>0);
+}
+function maxVisibleTier(){ let m=0; for(let t=1;t<28;t++){ if(unlockedTier(t)) m=t; else break; } return Math.min(m+1,27); }
+
+/* ============ MACHINERY — 28 strata x 64 machines, all hand-written ============ */
+const BLD_RAW=[{"t":1,"name":"Surface Scrap","rows":[["Bent Spade","snapped twice, still digs"],["Rusted Pickaxe","flaking iron, honest work"],["Chipped Hammer","head wobbles on impact"],["Wooden Sieve","shakes out the pebbles"],["Leaky Bucket","carries most of what you scoop"],["Borrowed Wheelbarrow","return it by friday, they said"],["Grandpa's Boots","steel toe, leather soul"],["Mason Jar","for the shiny bits"],["Coffee Thermos","morale infrastructure"],["Dying Headlamp","dim, dependable, doomed"],["Work Gloves","one has a hole in the thumb"],["Chalk Marks","someone's old claim lines"],["Tarp Shelter","leaks when it rains"],["Second Tarp","leaks when it doesn't"],["Tin Whistle","keeps the crows guessing"],["Old Bess","a donkey with opinions"],["Bess's Foal","learning the cart routes"],["Barn Cat","pest control, paid in ore"],["Neighbor Kid","works weekends for snacks"],["Unpaid Intern","it's for the resume"],["Claim Stake","rag on a stick, legally binding"],["Rock Hammer","for the stubborn seams"],["Hand Rake","pulls rubble, finds glitter"],["Sifting Pan","swirl and hope"],["Pocket Knife","blade ground down to nothing"],["Twine Spool","binds everything but patience"],["Wooden Ladder","rungs numbered in pencil"],["Patched Sack","mended three times, holding"],["Knee Pads","the knees remember"],["Straw Hat","sun management"],["Canteen","lukewarm, always"],["Beef Jerky","harder than the ore"],["Camp Stool","sits one, barely"],["Candle Stub","burns unevenly, like the day"],["Match Tin","kept dry against all odds"],["Soap Bar","grey now, still soap"],["Bent Nail","pulled, straightened, reused"],["Burlap Roll","wraps the fragile finds"],["Trowel","archaeologists swear by them"],["Magnifying Lens","for the tiny sparks"],["Magnet On A String","fishes nails from the gravel"],["Half A Map","the good half, at least"],["Lucky Pebble","carried since the first day"],["Whetstone","keeps edges honest"],["Kindling Bundle","fires need feeding too"],["Ash Bucket","what's left after hope"],["Tin Cup","tastes faintly of iron"],["Boot Grease","squeak prevention"],["Notebook","ore counts in bad handwriting"],["Stub Pencil","chewed, sharpened with a knife"],["Fry Pan","beans again, friend"],["Salt Pouch","seasoning and preservation"],["Bedroll","dreams of veins"],["Morning Bell","rings whether you're ready or not"],["Stock Tank","Bess drinks first"],["Fence Wire","marks where digging stops"],["Wheel Grease","for the barrow that isn't yours"],["Extra Sock","currency among diggers"],["Bone Buttons","traded for quartz"],["Chewing Tobacco","spit responsibly"],["Story","the one about the big vein"],["Blister Kit","mothballs and reputation"],["Patience","the rarest tool on the hill"],["Faded Sign","ore for sale, slightly used"]]},{"t":2,"name":"The Workshop","rows":[["Hand-Crank Drill","your other arm got strong"],["Blacksmith Bellows","breathes life into coals"],["Grindstone","sparks fly off every morning"],["Bench Vice","grips so you don't have to"],["Coal Forge","orange heart, black smoke"],["Tin Snips","cuts sheet like paper"],["Tap And Die","threads that actually hold"],["Ball-Pein Hammer","the workshop's handshake"],["Cold Chisel","persuades metal when hot won't"],["Drift Punch","lines up the holes, mostly"],["Flatter","smooths what the hammer wronged"],["Swage Block","shapes iron into intentions"],["Secondhand Anvil","rings like a struck bell"],["Quench Barrel","hiss and steam and temper"],["Three Sizes Of Tongs","and you still reach for the wrong one"],["Vise Grips","the third hand"],["Hacksaw","patience encoded in steel"],["File Set","bastard, second, smooth"],["Whetstone Wheel","for edges that matter"],["Rasp","wood surrenders politely"],["Auger Bit","drills without asking"],["Breast Drill","lean into the work"],["Hand Brace","slow, steady, certain"],["Rivet Kit"," permanent joins for temporary problems"],["Solder Iron","plumbing and prayer"],["Calipers","measures what eyes guess"],["Micrometer","argues with the calipers"],["Scribe","scratches the truth"],["Dividers","steps out the circles"],["Punch Set","marks before drilling"],["Letter Stamps","name your tools, shame thieves"],["Grease Pot","the workshop's blood type"],["Beeswax Block","screws turn sweeter"],["Leather Apron","scars you can wash off"],["Forge Hood","draws the smoke outside"],["Coal Scuttle","feed the beast"],["Clinker Hook","rake the dead coals"],["Ash Rake","gardening, but fire"],["Slack Tub","quench the small stuff"],["Mandrel","roundness, enforced"],["Hardy Tool","sits in the anvil, does the cutting"],["Cross-Pein","spreads metal sideways"],["Straight-Pein","spreads it straight, apparently"],["Setting Hammer","finesses the flanges"],["Water Trough","for bad days"],["Oil Stone","whispers edges back"],["Emery Cloth","polish until it looks intentional"],["Wire Wheel","rust's natural enemy"],["Scutch Comb","dresses stone like a barber"],["Forge Blower","cranked by the new kid"],["Fire Clay","patches the furnace's opinions"],["Casting Flask","sand shapes for molten promises"],["Crucible","survives what it melts"],["Skimmer Spoon","dross off the top"],["Ingot Mold","progress, in bar form"],["Stamp Press","marks the output yours"],["Workbench","oiled, burned, loved"],["Sawhorse Pair","architecture, temporary"],["Clamp Forest","never enough, always needed"],["Blueprint Sheet","chalk on paper, close enough"],["Toolbox","locks with a bent nail"],["Shadow Board","every outline a missing tool"],["Apprentice","blisters forming on schedule"],["Coffee Pot","always on, never good"]]},{"t":3,"name":"Pit Operations","rows":[["Windlass","two men and a rope's opinion"],["Gin Pole","lifts what pride cannot"],["Headframe","the town's new skyline"],["Whim Engine","horse-powered, mostly willing"],["Kibble","the bucket that goes down angry"],["The Adit","a doorway into the hill"],["Winze","downward, on purpose"],["First Stope","the vein opens like a book"],["Crosscut","toward the rock that pays"],["The Raise","climbing through hot stone"],["Ore Chute","gravity does the hauling"],["Grizzly","bars that eat the boulders"],["The Skip","rides the rope like a dare"],["Cage","up and down, up and down"],["Canary","sings until it doesn't"],["Davy Lamp","flame that tells secrets"],["Safety Fuse","burns slower than regret"],["Powder Keg","respect at forty paces"],["Tamping Rod","pack the shot, mind the spark"],["Slusher Hoist","drags the muck uphill"],["Mucker","shovels for a living, wins anyway"],["Airleg Drill","hammer between your lungs"],["Stoper","drills the ceiling, carefully"],["Jackleg","the miner's third limb"],["Vent Canvas","directs the wind's commute"],["Air Door","slams shut behind you"],["Track Layer","rails into the dark"],["Ore Cart","squeaks its own name"],["Cart Tipper","dumps without drama"],["Timber Frame","holding up the mountain"],["Square Set","rooms built of wooden nerves"],["Stull","a floor where there wasn't one"],["Backfill Crew","fills yesterday's triumphs"],["Lagging","planks against the sky of rock"],["Cap Piece","the beam that carries the worry"],["Mud Cap","seals the seam before the blast"],["Powder Monkey","walks soft, carries loud"],["Fuse Crimper","precision in a loud trade"],["Blasting Machine","the twist that moves mountains"],["Misfire Hook","for retrieving bad decisions"],["Scaling Bar","pries the loose before it falls"],["Rock Dust","sprayed so the air behaves"],["Water Line","dust's only opponent"],["Carbide Lamp","drip, flame, shadow"],["Carbide Stock","the mine's pantry"],["Lunch Pail","cold cornbread at the face"],["Double Jack","two hammers, one rhythm"],["Single Jack","one hammer, all day"],["Drill Steel","sharpened until it's all been used"],["Sharpening Rig","the whistle of ready steel"],["Sample Sack","every third chunk, boss's orders"],["Assay Ticket","paper worth more than ore"],["Pump Sump","bailed by hand, cursed by all"],["Hand Pump","arms like bridge cables"],["Ladderway","up is its own shift"],["Manway","the polite name for the climb"],["Station Cut","a room before the rooms"],["Diamond Drill","core samples, truth in cylinders"],["Core Box","geology, filed neatly"],["Survey Transit","angles that settle arguments"],["Plumb Bob","straight down, no debate"],["Claim Post","the second one, this time notarized"],["Powder House","the quietest building in camp"],["Candle Clock","time burns literally"]]},{"t":4,"name":"Steam & Company","rows":[["Boiler Plant","the heartbeat, under pressure"],["Steam Whistle","punctual, merciless"],["Corliss Engine","turns steam into intentions"],["Stamp Battery","ten hammers, one heartbeat"],["Amalgam Pan","mercury does the whispering"],["Assay Furnace","small doors, hot truths"],["Crucible Rack","holds the melts"],["Cupel Button","where the metal confesses"],["Balance Scale","weighs to the grain"],["Payroll Clerk","the most armed man in camp"],["Company Store","prices tied to your debt"],["Bunkhouse","forty snores in harmony"],["Cook Shack","beans, bread, and benediction"],["Mule Stable","the other workforce"],["Powder Magazine","locked, guarded, gossiped about"],["Tramway","ore rides the wire"],["Incline Railway","up the hill by cable"],["Frue Vanner","a shaken blanket that gets rich"],["Huntington Mill","rollers with bad intentions"],["Jig Cell","pulses the heavy from the light"],["Wilfley Table","riffles catch the fine gold"],["Slime Pond","the slow rich tailings"],["Calciner Drum","sulfur's last words"],["Retort Bench","mercury returns, vaporized"],["Zinc Precipitation Box","shavings eat the gold"],["Chlorination Barrel","chemistry under lawsuit"],["Cyanide Vat","the new alchemy, handle with gloves"],["Leaching Trough","drips out the value"],["Smelter Stack","the town's grey finger"],["Matte Tap","orange rivers at midnight"],["Converter Blow","the slag boils off angry"],["Anode Furnace","almost pure, almost proud"],["Casting Wheel","molds on a carousel"],["Wire Bar","metal with a future"],["Machine Shop","fixes everything but management"],["Line Shaft","leather belts everywhere, danger too"],["Grease Room","the company's slipperiest asset"],["Blacksmith Lead","sharpening, always sharpening"],["Tool Crib","signed out, signed in, argued over"],["Night Watchman","checks the valves at two"],["Water Jacket","keeps the furnace from itself"],["Blower Engine","feeds the fire its air"],["Condenser","captures what boiling off would waste"],["Pump Governor","keeps rhythm from ruin"],["Belt Dressing","sticks and smells of pine"],["Firebrick Squad","repairs the oven's moods"],["Ladle Lip","pours clean when treated well"],["Slag Pot","the leftover's taxi"],["Slag Dump","a hill that used to be waste"],["Brick Kiln","builds the pieces that build"],["Timber Flume","logs ride the mountain water"],["Sawmill","teeth for the underground frames"],["Rail Spur","connects the mine to the world"],["Ore Bin","hungry iron throat"],["Loading Chute","fills the cars in seconds"],["Weighbridge","the number that becomes the check"],["Sample Mill","grinds the truth small"],["Fire Assay Lab","mystery to numbers in a day"],["Water Rights","paper worth more than gold"],["Flume Crew","fixes leaks with more wood"],["Tailings Flume","carries the leftovers away"],["Assayer's Vault","small door, large consequences"],["Company Scrip","money that only spends here"],["Union Meeting","wednesday, after shift, bring torches"]]},{"t":5,"name":"Deep Shaft","rows":[["Hoist House","the drum the world winds on"],["Koepe Winder","friction does the lifting"],["Head Sheaves","the wheels the rope prays to"],["Conveyance","the proper word for the cage"],["Man-Cage","forty souls per trip"],["Ore Skip","dumps itself at the top"],["Skip Dispatch","timing is everything"],["Shaft Stations","rooms down a staircase of stone"],["Station Cuts","the first breath of each level"],["Level Drives","horizontal ambition"],["Sublevel","between the stories of the mine"],["Rock Bolts","threads into the mountain's temper"],["Cable Bolts","long anchors for long moods"],["Shotcrete Rig","sprays concrete like a garden hose"],["Mesh Layer","chainmail for the ceiling"],["Scaling Machine","the roof's personal trainer"],["Jumbo Drill","three bores at once, no waiting"],["Scooptram","the tireless mucking mule"],["LHD Fleet","load, haul, dump, repeat"],["Grizzly Crusher","teeth for the oversize"],["Ore Pass","a vertical shortcut for rock"],["Chute Gate","hydraulic manners for a waterfall"],["Underground Crusher","chews at the source"],["Belt Feeder","meals on a schedule"],["Ventilation Fan","the mine's lungs, four stories tall"],["Air Regulator","spends pressure where needed"],["Duct Network","wind with a floor plan"],["Auxiliary Fan","targets the stuffy corners"],["Refuge Chamber","air, water, and patience"],["Mine Phone","crackles with consequences"],["Leaky Feeder","radio that follows you down"],["Gas Monitors","beep before the invisible hurts"],["Methane Meter","reads the swamp beneath"],["CO Sensors","the ghost's tell"],["Seismic Net","listens for the mountain's plans"],["Microseismic Array","hears rock think"],["Backfill Plant","pours yesterday into tomorrow"],["Paste Fill","tailings with a structural future"],["Cement Silo","for the underground masons"],["Dewatering Pump","the sump's eternal rival"],["Stage Pump","lifts water level by level"],["Settling Drift","lets the mud reconsider"],["Clear Water Dam","recycled and respectable"],["Power Substation","sparks a thousand meters down"],["Trolley Locomotive","electric mule on rails"],["Battery Loco","quiet, charged, punctual"],["Charging Bays","where the locos sleep"],["Rail Grinder","keeps the ride honest"],["Ballast Crew","stones under the steel"],["Diamond Wire Saw","cuts drifts like cake"],["Raise Borer","drills up to meet itself"],["Boxhole Machine","small circles, big futures"],["Cable Waste","all that rope, one skip at a time"],["Shaft Sinkers","the people the depth respects"],["Sinking Stage","a floor that descends forever"],["Galloway","drills the shaft's own walls"],["Curbing","rings that keep the shaft round"],["Shaft Lining","concrete corset for the earth"],["Plumbing Column","the depth gauge, hanging"],["Shaft Signal","bells that never lie"],["Cage Chairs","blocks the skip's mistakes"],["Overwind Guard","the brake of last resort"],["Escape Ladderway","the long way home, on rungs"],["Airlock Door","pressure with manners"]]},{"t":6,"name":"Wet Chemistry","rows":[["Leach Pad","a driveway that drips money"],["Drip Irrigation","rain, but on payroll"],["PLS Pond","pregnant with dissolved ore"],["SX Mixer","oil and water trading metals"],["Electrowinning Cell","plates the future on cathodes"],["Rougher Cells","first pass, greedy bubbles"],["Scavenger Cells","the bubbles that beg"],["Cleaner Cells","finishing school for concentrate"],["Column Flotation","tall tubes of frothy gossip"],["Reagent Skid","chemicals with name tags"],["Frother Dosing","one drop too many and it's foam"],["Collector Feed","teaches minerals to be clingy"],["Depressant Tank","some particles need discouraging"],["pH Meter","the pool's conscience"],["Lime Silo","sweetens the acidic tempers"],["Thickener Rake","slow arms, clear water"],["High-Rate Thickener","the rake, but hurried"],["Filter Press","squeezes the last excuses out"],["Vacuum Drum","dries cake without heat"],["Rotary Dryer","a tumble dryer for rock"],["Roasting Kiln","the sulfurs' farewell tour"],["Fluid Bed Roaster","dances the ore to death"],["Acid Plant","turns waste smoke into product"],["Bioleach Vat","bacteria on minimum wage"],["Thiobacillus Colony","the hardest working culture alive"],["Archaea Tank","loves the heat, eats the ore"],["Enzyme Wash","nature's patient dissolving"],["Geobacter Reactor","wires the electrons away"],["Centrifuge Deck","spins sense into slurry"],["Hydrocyclone","a tornado with a job"],["Spiral Concentrator","gravity's lazy river"],["Shaking Table","the old way, still winning"],["Jig Plant","pulses pay dirt by density"],["Dense Media Drum","floats the light, sinks the profit"],["Magnetic Separator","pulls the iron aside politely"],["Eddy Current Rig","flicks nonferrous off the belt"],["Electrostatic Drum","sorts by spark"],["XRF Sorter","reads chemistry at conveyor speed"],["Optical Sorter","judges rocks by their looks"],["Neutron Activation","asks the ore directly"],["Ion Exchange Column","trades one metal for another"],["Solvent Recovery","keeps the chemistry solvent"],["Evaporation Pond","sunlight does the distilling"],["Crystallizer","order out of solution"],["Precipitation Tank","now you see it, now it's solid"],["Oxygen Lance","chemistry's cattle prod"],["Autoclave","pressure cooking the stubborn ore"],["POX Vessel","oxidation with a temper"],["CIL Tanks","carbon drinks the gold"],["CIP Circuit","the reverse sip"],["Carbon Regeneration","kiln that cleans the sponge"],["Electrowinning Bag","cathode's cotton prison"],["Merrill-Crowe Press","vacuum sucks out the shine"],["Zinc Dust Feeder","the gold's final dance partner"],["Smelt Furnace","the last fire before the bar"],["Dore Pour","the moment it becomes salary"],["Assay Loop","quality control with a torch"],["Tailings Dam","the mine's diary, in mud"],["Water Recycling Plant","every drop, twice"],["Neutralization Tank","rudeness removed, ph 7"],["Settling Aid","flocculent, the mud matchmaker"],["Gypsum Stack","waste with architectural ambitions"],["Reagent Farm","grows the next generation of chemistry"],["Froth Laundry","the bubbles' bathhouse"]]},{"t":7,"name":"Electrified Mine","rows":[["Substation","where the megawatts check in"],["Transformer Yard","the hum you can feel in teeth"],["Trolley Line","copper sky for electric mules"],["Battery Charger Room","the locos' cafeteria"],["Electric Shovel","bites fourteen tons per thought"],["Dragline Motor","swings houses on a chain"],["Conveyor Gallery","the mine's esophagus"],["Belt Tripper","pours the stream where told"],["Stacker","builds hills of product"],["Reclaimer","unbuilds them on schedule"],["Crusher Station","the loudest cafeteria"],["Apron Feeder","metal tablecloth for boulders"],["Grizzly Screen","the bouncer at the crusher door"],["Ball Mill","tumbles ore into flour"],["SAG Mill","the one that eats drums for lunch"],["Pebble Crusher","recycles the mill's rejects"],["Tower Mill","grinding, but vertical and smug"],["Vertimill","the quiet overachiever"],["Screen Deck","shakes sizes apart"],["Dewatering Screen","leaves the wet behind"],["Screw Classifier","the auger of judgement"],["Slurry Pump","moves oceans of mud uphill"],["Froth Launder","catches the bubble's cargo"],["Column Regenerator","keeps the froth sharp"],["Gearless Drive","the mill spins the motor"],["Slip Ring Motor","sparks contained, mostly"],["VFD Cabinet","speed dial for the mountain"],["Soft Starter","eases the amps awake"],["Capacitor Bank","the grid's piggy bank"],["Rectifier Room","turns AC into DC decisions"],["Cable Reel","spools the mine's nervous system"],["High-Voltage Crew","rubber gloves and composure"],["Sacrificial Anode","dies so the pipes don't"],["Cathodic Rack","shields the steel skeleton"],["Substation Chiller","keeps the transformers calm"],["Emergency Generator","the mine's plan B, always warm"],["UPS Room","zero milliseconds of doubt"],["Fiber Backbone","gossip at light speed"],["Radio Repeaters","the mountain's hearing aids"],["Control Room","chairs that outrank the shift boss"],["SCADA Wall","the mine drawn in dots"],["PLC Cabinet","if-then, but industrial"],["Instrument Air","clean, dry, obedient"],["Hydraulic Power Unit","muscle on demand"],["Lube Oil Skid","the mills' moisturizer"],["Belt Scale","weighs the flow without stopping it"],["Metal Detector","rejects the wrench you lost"],["Magnet Pulley","yanks tramp iron off the belt"],["Belt Rip Switch","one pull stops a kilometer"],["Emergency Pull Wire","the belt's tattletale"],["Dust Collector","baghouse of grey regrets"],["Scrubber Stack","the sky's apology filter"],["Fog Cannon","mists the haul roads obedient"],["Electric Loco","whispers down the drift"],["Fast Charger","eight minutes, full attitude"],["Trolley Assist","trucks sip from the wire"],["Regenerative Braking","downhill pays the light bill"],["Night Floodlights","the pit forgets to sleep"],["Borehole Cable","power through the mountain's spine"],["Earth Grid","lightning's designated exit"],["Relay Panel","the mine's reflexes"],["Digital Twin Server","the mine, mirrored and honest"],["Rectifier Bridge","the current, straightened"],["Motor-Generator Set","the noisy grandfather of the vfd"]]},{"t":8,"name":"Open Pit","rows":[["Bench Blast","the hillside's alarm clock"],["ANFO Truck","mixes explosives like a barista"],["Blasthole Drill","punches the recipe into stone"],["Rotary Rig","drinks diesel, dreams vertical"],["DTH Hammer","knocks from the inside"],["Presplit Line","the wall's barber"],["Powder Truck","delivers the argument"],["Stemming Loader","gravel corks for dynamite"],["Shot Firer","the key that turns the day"],["Seismograph","measures the mountain's opinion"],["Vibration Radar","keeps the neighbors from suing"],["Highwall Miner","eats coal from the cliff face"],["Auger Rig","screws into the seam"],["Contour Bench","the pit's staircase design"],["Rope Shovel","a wrist that lifts ninety tons"],["Hydraulic Face Shovel","the pit's main jaw"],["Backhoe Configuration","digs where shovels can't"],["Haul Truck","a house with opinions about speed"],["Twin-Power Truck","two engines, zero patience"],["Trolley-Assist Truck","sips wire on the climb"],["Water Truck","the dust's opponent, around the clock"],["Grader","the road's zen master"],["Dozer Fleet","pushes the problem somewhere useful"],["Wheel Dozer","spins instead of steps"],["Dragline","the dinosaur that pays rent"],["Clamshell","dips the pond like a spoon"],["In-Pit Crusher","the mouth of the conveyor mountain"],["Gyratory Crusher","a cone that never sleeps"],["Overland Conveyor","kilometers of moving sidewalk"],["Shiftable Conveyor","the pit's longest toy train"],["Tripper Stackers","piles on command"],["Train Loadout","fills cars in a thundering minute"],["Rail Dump","turns wagons inside out"],["Wagon Tippler","the carousel for coal"],["Stacker Reclaimer","the warehouse with a boom"],["Stockpile Tunnel","reclaims from underneath"],["Armored Feeder","armored belt for angry rock"],["Vibrating Grizzly","shakes out the fines"],["Scalping Screen","the bouncer's bouncer"],["Splitter Rolls","divides the river of rock"],["Slope Radar","watches the walls for twitches"],["Prisms Network","the highwall's jewelry"],["Piezometers","gossip from inside the water table"],["Dewatering Wells","straws into the aquifer"],["Sump Barge","pumps the pit's bathtub"],["Pit Lake Fountain","aeration with ambition"],["Geotech Drone","maps the wall every sunrise"],["Survey Drone","photogrammetry before coffee"],["Blasting Seismograph Network","the mountain's lie detector"],["Ripper Dozer","tears hard ground without dynamite"],["Rock Breaker","the chisel on a stick"],["Mobile Jaw Crusher","the crusher that follows you"],["Track-Mounted Cone","secondary crushing, anywhere"],["Grade Control Rig","drills the map of tomorrow"],["Ore Control Hut","where the shovels get their orders"],["Dispatch Tower","air traffic control for rocks"],["Autonomous Haul Controller","trucks that never text while driving"],["Fleet Management System","every machine, on the record"],["Fuel Farm","the pit's snack cabinet"],["Tire Bay","three-meter rubber donuts"],["Maintenance Bays","where trucks become patients"],["Component Shop","engines in surgery"],["Line Setter","string that decides where hills move"],["Pit Design Software","the mountain, edited"]]},{"t":9,"name":"Under Pressure","rows":[["Directional Drill","steering a needle a kilometer down"],["Mud Motor","the drill's mud-powered legs"],["MWD Probe","knows where the bit is, exactly"],["LWD Tool","reads the rock while drilling it"],["Rotary Steerable","the bit that thinks laterally"],["Drill String","a kilometer of nervous system"],["Drill Pipe Rack","the spine, racked and ready"],["Casing Crew","armors the hole"],["Cementing Unit","glues the armor on"],["Float Shoe","one-way door at the bottom"],["Blowout Preventer","the reason everyone exhales"],["Choke Manifold","the well's temper valve"],["Mud Gas Separator","burps the gas out safely"],["Shale Shakers","the mud's first audit"],["Desilter Cones","spins the silt away"],["Centrifuge Unit","the mud's spa day"],["Mud Tanks","brown ocean, constantly judged"],["Mud Engineer","chef of the world's worst smoothie"],["Barite Sack Stack","weight, in bags"],["Drilling Fluid Lab","viscosity with a punchline"],["Top Drive","the derrick's spinning head"],["Iron Roughneck","robot that screws pipe"],["Pipe Handler","moves tons like pool cues"],["Drawworks","the hole's elevator motor"],["Traveling Block","rides the cable up and down"],["Crown Block","the pulley at the top of the world"],["Derrick Hand","works at the altitude of nerves"],["Doghouse","the crew's cramped brain"],["Substructure","the steel shoes of the rig"],["Riser Column","the deepwater spinal cord"],["Riser Tensioner","keeps the noodle upright"],["Telemetry Umbilical","the well's phone line"],["BOP Stack","the submarine lawyer"],["Wellhead Tree","a valve sculpture named christmas"],["Slickline Truck","wire that does surgery"],["Wireline Unit","logs the rock's diary"],["Perforating Gun","bullet points for the casing"],["Frac Fleet","pressure on wheels"],["Frac Blender","smoothies, industrial edition"],["Hydration Unit","gels the water"],["Sand Cannon","fires proppant like confetti"],["Missile Manifold","splits pressure to the well"],["Frac Tree","the well's second christmas"],["Flowback Separator","catches what comes back angry"],["Test Separator","measures the well's promises"],["Flare Stack","burns the lies off the gas"],["Condensate Tanks","the liquid good news"],["Gas Dehydration","glycol squeezes the water out"],["Compressor Station","the pipeline's lungs"],["Meter Run","the number on the invoice"],["Pig Launcher","sends the pipeline's cleaning pet"],["Smart Pig","the pipeline's mri"],["Coiled Tubing Unit","a pipe that never untangles"],["Nitrogen Pumper","cold invisible hammer"],["Acid Train","dissolves the well's shyness"],["Hot Oiler","paraffin's nemesis"],["Slickline Pressure Control","the grease-sealed handshake"],["Snubbing Unit","forces pipe into angry wells"],["Workover Rig","the well's second opinion"],["Pump Jack","the iron horse that nods forever"],["Plunger Lift","the well hawks a loogie, profitably"],["Gas Lift Compressor","bubbles that lift oil"],["ESP Skid","electric pump at the bottom of the world"],["Sucker Rod String","the pump's connective tissue"]]},{"t":10,"name":"Fleet Automation","rows":[["Robot Loader","digs by itself, never complains"],["Autonomous Hauler","38 tires of pure obedience"],["Tele-Remote Cab","mining from a desk chair"],["Drone Swarm","the pit's nervous system, airborne"],["Lidar Surveyor","the mine, in a million points"],["SLAM Mapper","maps while hopelessly lost"],["Digital Twin","the mine's mirror, always honest"],["Dispatch AI","ruthlessly fair truck scheduling"],["Predictive Maintainer","hears bearings whisper"],["Vibration Analyst","reads the mill's pulse"],["Oil Lab Robot","sniffs machines for bad habits"],["Thermal Fleet Scan","every hot bearing, photographed"],["Wireless Sensor Mesh","the mine's skin, feeling everything"],["Smart Rock Bolts","fasteners with opinions"],["Mesh-Installing Bot","chainmail tailored by machine"],["Shotcrete Drone","concretes the ceiling mid-flight"],["Inspection Crawler","a robot pill with cameras"],["Refuge Bot","delivers air to the trapped"],["Gas Sniffer Drone","hunts the invisible underground"],["Conveyor Repair Bot","patches belts without shutting up"],["Belt Alignment Crew","the laser-straight patrol"],["Railveyor Loop","trains of pods on demand"],["Monorail Skip","the underground people-mover"],["Charging Depot","the robots' gas station"],["Battery Swap Rig","eight minutes to full attitude"],["Opportunity Charger","charges during coffee breaks"],["Autonomous Drill Jumbo","bores the pattern, unwatched"],["Blasthole Charging Bot","feeds the holes precisely"],["Laser Profiler","sculpts the blast face"],["Ore Pass Monitor","watches the vertical conveyor"],["Block Cave Drawpoint Bell","rings when the cave feeds"],["Cave Monitoring Radar","hears the mountain cave in"],["Smart Ventilation","wind with a budget"],["On-Demand Airflow","fresh air, routed by algorithm"],["Diesel Particulate Filter","lungs for the tunnels"],["Electric Jumbo","drills without the fumes"],["Battery LHD","scoots silently through the dark"],["Hybrid Hauler","sips diesel, sprints electric"],["Hydrogen Pilot","the future on training wheels"],["Overhead Fast Charger","the bus-bars of the deep"],["Robot Tire Whisperer","listens for the fatal squeal"],["Tire Pressure Telemetry","every donut, reported live"],["Autonomous Water Truck","sprays exactly where dusty"],["Smart Grader","the road fixed before breakfast"],["Dozer Autonomy Package","pushes piles on rails of code"],["Fleet Health Cloud","the mine's medical record"],["Digital Shift Handover","nobody forgets anything anymore"],["AR Helmet","blueprints on the world"],["Tablet Inspection","checklists that can't be pencil-whipped"],["Underground Wifi","cat videos at minus forty levels"],["Edge Server Rack","the mine thinks locally now"],["5G Slice","bandwidth for the boring parts"],["Beacon Grid","every machine knows its place"],["UWB Tracking","centimeters, even in the drift"],["Collision Avoidance","the truck that brakes for you"],["Fatigue Monitor","the camera that sends you home"],["Proximity Alarm","the last word in not being crushed"],["Fleet Depot Robot","greases what needs greasing"],["Autonomous Sampler","walks to the face, takes a piece"],["Sample Prep Robot","crushes, splits, and never lies"],["Autoclave Drone","inspects the pressure vessel"],["Tailings Dam Sensor Net","the dam confesses in real time"],["Pump Health Grid","every impeller, accountable"],["AI Geologist","predicts ore from drill dust"]]},{"t":11,"name":"Molecular Seams","rows":[["Catalyst Lattice","hands that never tire"],["Nano Sieve","filters holes between atoms"],["MOF Filter","metal foam, infinitely picky"],["Zeolite Column","molecular night club bouncers"],["Molecular Imprint","plastic that remembers its prey"],["Chiral Column","sorts left hands from right"],["Affinity Beads","bait for a single protein"],["Aptamer Rig","dna that fishes molecules"],["Ribosome Line","nature's 3d printer"],["Enzyme Cascade","dominoes made of protein"],["Cell-Free Reactor","life without the living"],["Thiobacillus Vat","bacteria with a work ethic"],["Archaeon Colony","thrives where nothing should"],["Biofilm Reactor","a city of microbes on shift"],["Phage Foundry","viruses on the payroll"],["CRISPR Bench","edits the miners, microscopically"],["Directed Evolution","breeding the perfect enzyme"],["Ribozyme Vat","rna that does its own cutting"],["Prion Refinery","misfolds, but on purpose"],["Quantum Dot Sorter","colors the elements apart"],["Plasmonic Heater","boils water with light itself"],["Metasurface Lens","flat glass, impossible focus"],["Photonic Crystal","light trapped in a lattice"],["Phonon Trap","harvests the lattice's hum"],["Exciton Conveyor","energy moved like luggage"],["Polariton Rig","half light, half matter, all business"],["Bose Ensemble","atoms marching in lockstep"],["Fermion Sieve","one atom at a time, exactly"],["Ion Trap Array","atoms in invisible cages"],["Optical Tweezer","fingers made of lasers"],["Atomic Layer Deposition","paint one atom thick"],["MBE Chamber","grows crystals atom by atom"],["Sputter Source","sandblasts with ions"],["Epitaxy Rig","crystals grown on crystals"],["Nanotube Foreman","spools carbon rope"],["Graphene Kiln","bakes the world's best fence"],["Diamondoid Tip","drills with a gem's patience"],["Fullerene Scoop","the buckybucket"],["Nanowire Loom","weaves wire too thin to see"],["MEMS Foundry","machines smaller than mites"],["Lab-On-Chip","a factory on a postage stamp"],["Microfluidic Loop","plumbing narrower than hair"],["Droplet Reactor","chemistry in beads of oil"],["Vesicle Ferry","soap bubbles carrying cargo"],["Liposome Mill","fat bubbles, working hard"],["Molecular Motor","the tiniest wheel"],["Rotaxane Winch","a ring that slides a rope"],["Catenane Hoist","molecular chain blocks"],["Mechanophore Sensor","molecules that bruise visibly"],["Self-Healing Polymer","material with regrets and growth"],["Piezo Harvester","squeezes power from footsteps"],["Triboelectric Rig","static electricity, weaponized"],["Thermoelectric Lace","weaves heat into volts"],["Seebeck Spool","the gradient's tax collector"],["Piezoelectric Mesh","the mine that hums"],["Ferroelectric Cell","remembers which way you pushed"],["Multiferroic Block","magnetic and electric at once"],["Spin Filter","electrons sorted by mood"],["Skyrmion Racetrack","magnetic tornadoes, employed"],["Magnon Conveyor","spins the heat away"],["Bath Choir","the quantum vacuum, humming along"],["Molecular Escalator","atoms moved politely"],["Receptor Dock","the molecule's assigned berth"],["Chaperone Protein","folds the newcomers correctly"]]},{"t":12,"name":"Orbital Works","rows":[["Skyhook Tip","the elevator's first floor"],["Elevator Ribbon","a tape to the stars, technically"],["Climber Pod","the elevator car, patient"],["Counterweight Mine","the asteroid that holds the rope"],["Mass Driver","the railgun that ships product"],["Catch Net","catches what the railgun sends"],["Orbital Smelter","a furnace with a view"],["Solar Furnace Mirror","concentrated noon, forever"],["Beam Director","a spotlight that melts rock"],["Regolith Harvester","scoops the moon like flour"],["Lunar Whisk","stirs the dry seas"],["Ilmenite Kiln","bleeds oxygen from moon dirt"],["Ice Miner","the pole's most guarded employee"],["Volatiles Skimmer","hops after escaping gas"],["Dust Mitigator","moon dust is worse than cats"],["Rover Foreman","the fleet boss with six wheels"],["Swarm Excavator","a hundred tiny shovels, coordinated"],["Asteroid Bag","a pillowcase for a mountain"],["Rubble-Pile Sorter","shakes the rubble loose from value"],["NEO Snare","nets a tumbling rock"],["Tug Drone","the tow truck of deep space"],["Solar Sail Courier","mail delivered by sunshine"],["Ion Tug","thrust, gently, for years"],["Plasma Thruster Wall","the engine room that never shuts up"],["Ore Balloon","ore that surfs the solar wind"],["Maglev Catapult","the moon's other railgun"],["Laser Ablation Rig","mining by vaporizing lightly"],["Spalling Laser","flakes rock with pure light"],["Thermal Drill Head","bores through ice comets"],["Cryo Grabber","handles the cold without flinching"],["Platinum Dredge","the asteroid belt's rich dirt"],["Xeno Prospector","scouts orbits nobody named"],["Rail Reclaimer","recycles dead satellites"],["Debris Sweeper","vacuums orbit's junk drawer"],["Flyby Sampler","steals a sample at ten km/s"],["Sample Return Capsule","the mailman of the void"],["Phobos Anchor","a moon as a dock cleat"],["Deimos Depot","the second moon, a warehouse"],["Lagrange Wharf","parking where gravity agrees"],["Orbital Dry Dock","the shipyard with no floor"],["Truss Spool","builds bridges in the sky"],["Inflatable Habitat","the world's best bounce house"],["Regolith Printer","3d prints moon-brick walls"],["Sintering Lens","bakes roads into the dust"],["Farside Radio Quiet","the mine that never transmits"],["Polar Crane","lifts from the moon's deep freezer"],["Helium-3 Rake","the isotope worth a planet"],["Fusion Torch Ferry","pushes mountains, politely"],["Orbit Shepherd","keeps the rocks in formation"],["Ring Harvester","Saturn's jewelry, pruned"],["Shepherd Moonlet","a small moon with a big job"],["Roche Mill","grinds where tides do"],["Tidal Flex Drill","mines the warmth of squeezing"],["Tumbler Mill","the asteroid that mills itself"],["Centrifuge Refinery","spins the rock into grades"],["Vacuum Distiller","boils metals in nothing"],["Zone Refiner","a heater that leaves purity behind"],["Electrostatic Separator","the belt that sorts charged dust"],["Solar Wind Vane","sails the particle breeze"],["Photon Squeezer","harvests light like wheat"],["Thermal Sink Loom","weaves cold into power"],["Radiation Shield Weave","fabric that argues with particles"],["Starshade Foreman","mines in manufactured night"],["Sun-Synchronous Rig","mines in eternal dawn"]]},{"t":13,"name":"Crustal Engines","rows":[["Plate Jack","lifts a continent, a knuckle at a time"],["Subduction Tap","drinks where the earth swallows itself"],["Fault Grease Rig","lubricates the earth's grinding teeth"],["Seismic Harvester","collects the energy of arguments below"],["Isostasy Pump","the ground floats, we bail"],["Orogeny Belt","mountains, manufactured on schedule"],["Mountain Unloader","deposits a range, piece by piece"],["River Capture","steals a watershed's cargo"],["Delta Scoop","mines the river's ledger"],["Glacier Mill","the ice crushes, we collect"],["Moulin Rig","dives the glacier's throat"],["Ice Core Archive","climate, in a straw"],["Permafrost Thumper","wakes the frozen north, carefully"],["Hydrate Needle","harvests ice that burns"],["Methane Catcher","gathers the swamp's whispers"],["Kimberlite Pipe","the earth's own ore elevator"],["Diatreme Drill","rides the ancient explosion"],["Magma Sleeve","insulates a river of rock"],["Lava Skimmer","skims stone like soup"],["Obsidian Shear","cuts volcanic glass in sheets"],["Pumice Raft","mines the floating stone"],["Fumarole Cap","the hat that collects the steam"],["Geyser Valve","Old Faithful, employed"],["Hot Spring Loop","bathwater becomes watts"],["Enhanced Geothermal","fracking, but for good"],["Dry Rock Reservoir","heat with no water, still generous"],["Binary Cycle Plant","the humble temperature difference"],["Heat Mining Array","the crust's warmth, invoiced"],["Deep Bore Array","holes ten kilometers deep"],["Kola Continuation","the borehole's greater sequel"],["Terrace Farm Rig","erosion, but managed"],["Loess Harvester","mines wind-deposited soil"],["Playa Crust Scraper","the dry lake pays royalties"],["Evaporite Shelf","the salt that used to be sea"],["Sabkha Filter","the tide's chemistry set"],["Karst Mapper","the earth's swiss cheese, catalogued"],["Speleothem Saw","cuts the cave's slow chandeliers"],["Guano Vault","bat economics, harvested"],["Tufa Tower Rig","mines the strange stone sculptures"],["Travertine Terraces","hot springs, masoned"],["Geyser Basin Grid","every spouter, plumbed"],["Mud Pot Skimmer","the earth's sour porridge"],["Solfatara Collector","volcanic breath, canned"],["Phreatic Snorkel","drinks the underground explosion"],["Epithermal Vein Tap","the shallow hot deposit"],["Porphyry Shell Cracker","the big low-grade prize"],["Skarn Refinery","where granite meets limestone, wealth"],["Greisen Lode","the tin's final form"],["Pegmatite Pocket","crystals the size of buses"],["Geode Cracker","opening the earth's kinder eggs"],["Vug Sweeper","the cavity's crystal janitor"],["Miarolitic Cavity Rig","the granite's jewel box"],["Aplite Dike Trim","the thin seams, precision cut"],["Sill Splitter","the lava that crept between beds"],["Laccolith Hoist","the mountain's secret balloon"],["Batholith Rand","the continent's stony fruit"],["Xenolith Sieve","the foreign rocks, catalogued"],["Mantle Xenolith Net","deep earth souvenirs, caught flying"],["Diamond Stability Field","mines where carbon learned manners"],["Eclogite Press","the subduction record, pressed"],["Blueschist Facies Rig","the cold subduction signature"],["Ultra-High Pressure Mill","rocks that dove thirty kilometers"],["Aa Flow Crusher","the rough lava, ground fine"],["Pahoehoe Roller","the ropey lava, rolled smooth"]]},{"t":14,"name":"Mantle Taps","rows":[["Plume Siphon","drinks the earth's fever"],["Diapir Lift","the bubble that lifts continents"],["Peridotite Kiln","cooks the mantle's green bread"],["Olivine Crusher","the mantle's grain, milled"],["Pyroxene Sorter","two pyroxenes, separated"],["Garnet Harzburgite Vat","the residue of creation"],["Lherzolite Smelter","the mantle's average, employed"],["Dunite Spool","pure olivine, spun"],["Kimberlite Window","a tube into the deep"],["Transition-Zone Probe","four hundred kilometers down"],["410 Discontinuity Gate","the earth's first inner door"],["520 Whistle","the echo of changing crystal"],["660 Gate","the great seismic firewall"],["Lower Mantle Rake","the second earth, harvested"],["Post-Perovskite Anvil","the crystal that rules the deep"],["D'' Layer Scraper","the core's mysterious blanket"],["ULVZ Dredge","the ultra-low velocity prize"],["LLSVP Tap","the blobs beneath africa and the pacific"],["CMB Skimmer","the core-mantle shoreline"],["Outer Core Dipper","liquid iron, carefully sipped"],["Geodynamo Tap","the engine of the compass"],["Dynamo Shunt","borrows the earth's magnetism"],["Magnetic Pole Sweeper","the wandering pole, tidied"],["Aurora Catcher","the sky's own cathode ray"],["Van Allen Scoop","the radiation belt, harvested"],["Magnetopause Sail","the bubble's outer skin"],["Field Line Looper","rides invisible ropes"],["Telluric Current Tap","the ground's faint electricity"],["Earth Battery Grid","the planet, wired"],["Schumann Resonator","the earth's hum, amplified"],["Piezo Crust Array","the ground's creaking, monetized"],["Tidal Flex Harness","the moon's daily squeeze"],["Chandler Wobble Damper","the earth's wobble, steadied"],["True Polar Wander Winch","the crust, re-parked"],["Supercontinent Stitch","sews pangaea's sequel"],["Rift Spreader","opens an ocean on demand"],["Aulacogen Drill","the failed rift that still pays"],["Triple Junction Rig","where three plates argue"],["Back-Arc Furnace","the sea's sneaky volcano"],["Island Arc Smelter","the factory of new crust"],["Accretionary Wedge Press","the subduction scrapyard"],["Mélange Blender","the tectonic fruitcake, mixed"],["Ophiolite Skid","ocean floor, parked on land"],["Serpentinite Reactor","the rock that swells and spawns life"],["Hydration Front Tracker","where water meets mantle"],["Dehydration Melter","squeezes the juice from stone"],["Flux Melting Rig","the mantle, spiked and melted"],["Decompression Kiln","lift stone, watch it liquefy"],["Magma Chamber Tap","the underground reservoir, plumbed"],["Mush Column Extractor","the crystal slush, refined"],["Cumulate Sorter","the chamber's layered history"],["Layered Intrusion Mill","the bushveld's secret"],["Chromitite Seam","the chrome horizon"],["Sulfide Melt Trap","the puddle of heavy treasure"],["PGE Reef Cutter","platinum by the layer cake"],["Fractionation Tower","separates a magma like distillery"],["Assimilation Vat","the magma that ate limestone"],["Xenolith Elevator","deep rocks, given a lift"],["Melt Inclusion Cracker","opens the magma's time capsules"],["Melt Bridge","connects chamber to eruption"],["Dike Feeder Rig","the magma's delivery vein"],["Sill Injector","the horizontal magma smuggler"],["Lava Tube Liner","insulates the flow for tapping"],["Xenocryst Sieve","the foreign crystals, sorted"]]},{"t":15,"name":"Core Harvest","rows":[["Inner-Core Anvil","the iron ball, struck for power"],["HCP Forge","the crystal form of the deep"],["Seismo Lens","focuses the earth's tremors"],["PKP Waveguide","the quake's core-piercing beam"],["PcP Reflector","the core's echo, harvested"],["ScS Resonator","the whole earth as a bell"],["Free Oscillation Tap","the planet rings, we collect"],["Hum Microphone","the earth's constant drone"],["Geoneutrino Net","the planet's radioactive ledger"],["Antineutrino Vat","the earth's furnace, witnessed"],["KamLAND Rig","the detector that counts the core"],["Core Reaction Furnace","the nuclear heart, tapped"],["Radiogenic Budget Office","the heat's accountants"],["Moho Drill","the crust-mantle boundary, punctured"],["Conrad Hoist","the crust's inner floor"],["Lehmann Gate","the inner core's discovery door"],["Anisotropy Loom","weaves the core's grain"],["Inner-Core Rotation Mill","the ball spins, we grind"],["Superrotation Winch","the core outruns the crust"],["Hemisphere Sieve","the core's two personalities"],["Inner-Core Age Clock","the earth's pacemaker, read"],["Nucleation Seed","the first crystal of the core"],["Snow-Maker","iron snow falling through the outer core"],["Slurry Boundary Rig","the core's mushy frontier"],["F-layer Tap","the extra liquid layer"],["Corm Exchanger","moves heat like a stubborn landlord"],["Core Dynamo Turbine","the magnetic engine, metered"],["Westward Drift Winch","the core's slow parade"],["Jerks Array","the field's tantrums, predicted"],["Secular Variation Dam","the field's drift, pooled"],["Field Reversal Capacitor","stores a flipped compass"],["Excursion Trap","the almost-reversal, caught"],["Dipole Meter","the main field, invoiced"],["Non-Dipole Comb","the field's wild hairs, combed"],["Crustal Magnet Vault","the rocks that remember fields"],["Paleomagnetic Archivist","ancient compasses, filed"],["Sea-Floor Stripe Harvester","the tape recorder of the ocean"],["Vine-Matthews Rig","the spreading ridge's diary"],["Magnetic Anomaly Sieve","the buried stripes, sifted"],["Magnetometer Bird","the towed sensor, ever flying"],["Fluxgate Compass Foundry","compasses forged from core-stuff"],["SQUID Gradiometer","the field's whisper, heard"],["Optically Pumped Magnetometer","lasers interrogate the field"],["Proton Precession Rig","hydrogen's tiny wobble, counted"],["Overhauser Probe","the field measured elegantly"],["Induction Coil Array","the field's fluctuations, scooped"],["Magnetotelluric Line","the crust, x-rayed with lightning"],["GIC Tap","solar storms, converted to cash"],["Storm Ground Grid","the aurora's current, farmed"],["Ionosphere Mirror","the sky's reflector, polished"],["Schumann Band Amplifier","the earth-ionosphere cavity, strummed"],["Whistler Collector","lightning's descending song"],["Chorus Rig","the magnetosphere's dawn chorus"],["Plasmasphere Scoop","the inner magnetosphere, bailed"],["Ring Current Turbine","the storm belt, generating"],["Field-Aligned Current Loom","the sky's wires, woven"],["Birkeland Tap","the aurora's power line"],["Polar Cap Array","the open field lines, harvested"],["Tail Lobe Winch","the magnetosphere's windsock"],["Magnetopause Generator","the boundary's pressure, monetized"],["Reconnection Engine","where field lines snap and pay"],["Substorm Bank","the sky's tantrums, saved for later"],["Pc5 Pascal Rig","the field's slow organ notes"],["Geoelectric Field Grid","the ground's voltage, farmed"]]},{"t":16,"name":"Planetary Strip","rows":[["Crust Peeler","the planet, unpeeled like fruit"],["Moho Skimmer","the floor of the world, lifted"],["Lithosphere Slabber","cuts the planet into countable slabs"],["Asthenosphere Ladle","the planet's plastic layer, poured"],["Terrane Crane","moves whole geologic provinces"],["Craton Core Drill","the ancient hearts, sampled"],["Shield Strip","the precambrian, strip-mined"],["Platform Harvester","the flat young cover, scooped"],["Orogen Band Saw","cuts mountain ranges into ribbons"],["Basin Pump","empties a sedimentary basin like a pool"],["Syncline Cradle","the fold's trough, cradled"],["Anticline Tap","the arch's oil, always first"],["Plunging Fold Winch","the fold that dives, followed"],["Thrust Package Rig","the stacked slices, unstacked"],["Nappe Mover","a mountain sheet, relocated"],["Klippe Cutter","the orphaned slice, trimmed"],["Window Excavator","the tectonic peek-hole, widened"],["Strike-Slip Conveyor","the fault's lateral freight line"],["Transform Mill","plates ground past each other, milled"],["Pull-Apart Basin Net","the fault's widening gaps, fished"],["Rift Valley Elevator","the seam of a future ocean, serviced"],["Mid-Ocean Ridge Trawler","the planet's longest factory, dragged"],["Axial Mound Dredge","the ridge's chimneys, dredged"],["Hydrothermal Comb","black smokers, combed"],["Sulfide Chimney Shears","cuts the vent towers"],["Vent Fauna Ranch","tube worms, farmed politely"],["Chemosynthetic Mill","the sunless food chain, fed"],["Brine Pool Skimmer","the seafloor lake, skimmed"],["Cold Seep Trap","the quiet leaks, capped"],["Gas Hydrate Rig","the ice that burns, mined"],["Abyssal Plain Dredge","the flattest place, raked"],["Manganese Nodule Rake","potatoes of the deep"],["Cobalt Crust Shaver","the seamounts' rind, peeled"],["Seamount Chain Hoist","the underwater islands, lifted"],["Guyot Flatbed","the drowned flat-tops, carried"],["Atoll Ring Harvest","the coral crowns, picked"],["Reef Framework Mill","limestone skeletons, processed"],["Ooid Shoal Sieve","the sand of tiny spheres"],["Foram Rain Net","catches the sky of the sea"],["Coccolith Press","chalk from a billion lives"],["Diatom Bloom Comb","glass gardens, harvested"],["Radiolarian Loom","weaves the deep's glass fuzz"],["Siliceous Ooze Pump","the opal mud, pumped"],["Calcareous Slurry Line","the chalky soup, piped"],["Turbidite Cannon","fires underwater avalanches on schedule"],["Submarine Canyon Rig","the drowned rivers, serviced"],["Fan Lobe Stacker","the deep deltas, stacked"],["Contour Current Mill","the deep rivers' deposits, milled"],["Paleo-Shoreline Track","the old beaches, followed"],["Sequence Boundary Saw","the sea level's story, cut clean"],["Unconformity Trimmer","the missing time, trimmed square"],["Basement High Crane","the uplifted roots, lifted"],["Diapir Balloon Rig","the salt domes, milked"],["Salt Canopy Net","the spreading salt, caught"],["Caprock Refinery","the dome's cap, rich and strange"],["Evaporite Sequence Fork","the dried sea, eaten layer by layer"],["Sabkha Brine Line","the coastal pans, tapped"],["Playa Crust Loader","the mineral flats, loaded"],["Caliche Hardpan Ripper","the cemented soil, cracked"],["Laterite Skid","the tropical rind, carted"],["Bauxite Pocket Vat","aluminum's cradle, emptied"],["Saprolite Softener","the rotted rock, refined"],["SuperGene Blanket Comb","the enriched cap, combed out"],["Abyssal Storm Net","the benthic weather, fished"]]},{"t":17,"name":"Stellar Syndicate","rows":[["Star Lift","the elevator to a fusion fire"],["Corona Skimmer","the sun's halo, harvested"],["Photosphere Raft","sails the star's skin"],["Chromosphere Net","the red rim, fished"],["Spicule Comb","the star's grass, combed"],["Sunspot Forge","magnetic bruises, mined"],["Penumbra Mill","the spot's soft edge, ground"],["Umbra Tap","the dark heart, drawn on"],["Flare Catcher","the star's tantrum, bottled"],["Coronal Mass Ejector Kite","rides the storm outward"],["Prominence Lasso","the hanging fire, roped"],["Filament Channel Rig","the dark threads, followed"],["Helioseismology Drill","listens to the star's ring"],["GONG Array","the whole star, monitored"],["MHD Kettle","magnetism boiled for power"],["Alfven Wave Turbine","the field's waves, generating"],["P-Mode Tap","the star's ten-minute pulse"],["G-Mode Rig","the core's secret rhythm"],["Core Tap","fusion's basement, plumbed"],["Proton-Proton Assembly","the basic fire, licensed"],["CNO Wheel","the fast catalytic furnace"],["Neutrino Farm","the ghostly exhaust, caught"],["Borexino Vat","sees the heart through the body"],["Radiative Zone Sieve","photon shuffle, harvested"],["Diffusion Ladder","light random-walking to payroll"],["Convective Cell Mill","the boiling columns, milled"],["Granulation Comb","the star's skin texture, combed"],["Supergranule Rake","the larger boil, raked"],["Tachocline Press","the shear layer that makes fields"],["Dynamo Lathe","the star's magnetism, machined"],["Magnetic Carpet Shaver","the looped field, shaved"],["Nanoflake Catcher","the tiny sparks, tallied"],["Coronal Hole Funnel","the open field, drafted"],["Fast Wind Rider","the breeze from the holes"],["Slow Wind Comb","the equatorial gale, combed"],["Heliosphere Sail","the bubble itself, trimmed"],["Termination Shock Dam","the river's rapid, dammed"],["Heliopause Gate","the star's front door"],["Bow Shock Plow","the interstellar snowplow"],["Interstellar Rake","the medium between stars, raked"],["Dust Grain Sorter","stardust, graded by grain"],["PAH Filter","the organic smog, filtered"],["Molecular Cloud Sieve","the star nursery, sifted"],["Dense Core Tap","the collapsing knot, drawn"],["Protostellar Hoist","the newborn, lifted by its disk"],["Accretion Disk Lathe","the feeding disk, turned"],["Magnetospheric Funnel","the star's food funnel"],["Herbig-Haro Cutter","the baby's jets, trimmed"],["T-Tauri Rig","the toddler star, handled"],["Main Sequence Ranch","stars pastured by mass"],["Turnoff Point Office","the herd's aging, tracked"],["Red Giant Press","the swollen elder, squeezed"],["Giant Branch Mill","the ascent, milled"],["Helium Flash Trap","the one-time pop, caught"],["Horizontal Branch Loom","the stable middle age"],["Asymptotic Giant Rig","the second swelling"],["Thermal Pulse Kiln","the shell flashes, baked"],["Planetary Nebula Comb","the shed skin, combed"],["White Dwarf Pick","the ember, plucked"],["Chandrasekhar Scale","the limit that rules"],["Neutron Star Ladle","the spoon for a city-sized atom"],["Nova Seed Drill","plants explosions for later"],["Supernova Trap","the mine's biggest blast, caged"],["Coronal Rain Comb","the falling loops, combed"]]},{"t":18,"name":"Degenerate Works","rows":[["Electron Sea Scoop","the metal that is all surface"],["Fermi Pressure Tap","the push that stops collapse"],["Degeneracy Press","matter that refuses to shrink"],["Fermion Pump","one per state, enforced"],["Pauli Sieve","the universe's strictest filter"],["Exclusion Mold","matter cast in stubbornness"],["Compton Lathe","machines below the wavelength"],["de Broglie Loom","weaves the matter waves"],["Wavefunction Shears","cuts possibilities cleanly"],["Coherence Loom","the phases, kept in line"],["Interference Comb","the fringes, harvested"],["Entanglement Distillery","spooky action, purified"],["Bell Rig","the theorem's test, run for profit"],["Qubit Foundry","superpositions, minted"],["Topological Qubit Vault","errors that cannot happen"],["Majorana Loom","braids the half-electrons"],["Anyon Mill","two dimensions, exotic milling"],["Quantum Hall Gauge","resistance defined by the universe"],["Berry Phase Winch","the geometric phase, lifted"],["Aharonov-Bohm Tap","the potential, tapped"],["Casimir Press","the vacuum squeezes for you"],["Vacuum Gap Wedge","nothingness, with force"],["Virtual Photon Net","the borrower's light, caught"],["Lamb Shift Rig","the jitter, measured and sold"],["Zero-Point Well","draws from the bottom of reality"],["False Vacuum Cup","sips the metastable"],["Bubble Nucleator","grows true vacuum on demand"],["Domain Wall Shear","cuts the cosmic membranes"],["Cosmic String Spool","defects in spacetime, wound"],["Monopole Magnet","the one-pole magnet, finally"],["Axion Windmill","the ghost particle, farmed"],["WIMP Sieve","the dark matter candidate, sifted"],["Neutrino Sail","the ghost's push, harnessed"],["Neutrino Oscillator Mill","flavors ground to order"],["Coherent Neutrino Beam","the ghost, focused"],["Weak Force Tongs","handles the shy interactions"],["Gluon Plumber","fixes the color lines"],["Confinement Vat","quarks, kept where they belong"],["Asymptotic Freedom Rig","quarks, briefly free for work"],["Quark-Gluon Crucible","the primordial soup, served"],["Strangelet Hook","the dangerous ice crystal"],["Charm Crucible","the second generation's ore"],["Bottom Foundry","the heavy quarks, cast"],["Top Forge","the heaviest, forged and gone"],["Higgs Tap","mass itself, metered"],["Yukawa Coupling Loom","weaves the mass-giving"],["Electroweak Kiln","the unified fire, reheated"],["Symmetry Breaker","the perfect, shattered profitably"],["Vacuum Expectation Rig","the field's default, harvested"],["Chiral Mill","left and right, ground apart"],["CP Violation Press","the universe's bias, pressed"],["Baryogenesis Engine","makes matter win"],["Leptogenesis Turbine","the neutrino version"],["Neutronium Ladle","the neutron star's flesh"],["Crust Smelter","the star's iron shell"],["Outer Core Dynamo","the star's liquid dynamo"],["Magnetar Press","the field stronger than space"],["Glitch Hammer","the starquake, scheduled"],["Starquake Shaker","the interior's snap, harvested"],["Vela Rig","the pulsar that keeps time"],["Millisecond Spin-Up Mill","the recycled pulsar"],["Pulsar Timing Array","the galaxy's clock network"],["Gravitational Wave Ear","the hum of the deep"],["Chiral Anvil","the asymmetry, hammered flat"]]},{"t":19,"name":"Horizon Adjacent","rows":[["Ergosphere Mill","spacetime's drag, milled for power"],["Frame-Drag Winch","the rotation borrowed, never returned"],["Penrose Trap","energy from the impossible"],["Hawking Collector","the faint glow, gathered"],["Tidal Shredder","the star, pulled to spaghetti"],["Accretion Auger","the feeding disk, drilled"],["Innermost Stable Rig","the last safe orbit, worked"],["Photon Sphere Skimmer","the light that circles forever"],["Ergotube","the tunnel through the spin"],["Jet Collimator","the pole's firehose, aimed"],["Relativistic Beam Rig","the jet, harvested"],["Superluminal Apparent Mill","faster than it looks"],["Companion Stripper","the donor star, drained politely"],["Roche Lobe Net","the tide's spoon, caught"],["Mass Transfer Tap","the star-to-star pipeline"],["Common Envelope Rig","the shared skin, processed"],["Type Ia Trigger","the standard candle, lit on purpose"],["Chandrasekhar Hoist","the mass, lifted to detonation"],["Nickel Forge","the supernova's product"],["Iron Core Crusher","the failure that makes fireworks"],["Neutrino Burst Funnel","the star's last breath, caught"],["Core Collapse Net","the fall itself, harvested"],["Bounce Shock Mill","the rebirth shockwave, milled"],["Spherical Torpedo Rig","the asymmetry, injected"],["Standing Accretion Instability","the pulse that eats"],["Quasi-Periodic Rig","the ringing instability"],["Echo Mapper","the disk mapped by its echoes"],["Reverberation Loom","the light's delayed return"],["Iron Line Foundry","the disk's x-ray signature"],["Broad Line Region Comb","the confused gas, combed"],["Narrow Line Sieve","the ordered gas, sifted"],["Torus Mill","the dusty doughnut, ground"],["Obscuring Screen Weaver","the hidden furnace, curtained"],["Super-Eddington Rig","brightness beyond the rules"],["Photon Bubble Mill","the radiation's foam"],["Radiation Pressure Turbine","light that pushes like rivers"],["SLAB Warp","gravity's strange lens, exploited"],["Gravitational Lens Mill","the universe's magnifying glass"],["Microlensing Sieve","the tiny blinks, sifted"],["Einstein Ring Weaver","the perfect circle, woven"],["Time Delay Bank","the lens's late payments, collected"],["Fermi Bubbles Tap","the galaxy's twin balloons"],["Relic Jet Harvester","the ancient beam, gathered"],["AGN Feedback Rig","the furnace that sculpts galaxies"],["Seyfert Comb","the smaller furnace, combed"],["Quasar Tap","the brightest thing, plumbed"],["Blazar Funnel","the jet pointed at us, caught safely"],["Lorentz Factor Mill","the near-light speeds, milled"],["Relativistic Doppler Rig","the colors of speed, harvested"],["Beaming Rig","the spotlight effect, weaponized"],["Bulk Motion Hoist","the whole plasma, lifted"],["Kilonova Foundry","the neutron-star crash forge"],["R-Process Loom","the heavy elements, woven"],["Platinum Blizzard Sieve","the gold and platinum snow"],["Magnetorotational Rig","the disk's secret engine"],["MRI Turbulence Mill","the magnetic churning, milled"],["Viscous Spreader","the disk, spread to heat"],["Shakura-Sunyaev Lathe","the standard disk, turned"],["ADAF Funnel","the starving black hole's diet"],["Inner Thicket Rig","the tangled field lines, farmed"],["Black Hole Battery","charge from the horizon"],["Blueshift Bank","the falling light's bonus"],["Naked Singularity Press","the censorship, defied"],["Broad Iron Comb","the x-ray signature, combed"]]},{"t":20,"name":"Spacetime Quarries","rows":[["Causal Seam Ripper","opens the fabric, neatly"],["Worldline Dredge","the history of a particle, dragged up"],["Lightcone Opener","the future, pried apart"],["Metric Stretcher","distance itself, elongated for sale"],["Rubber Sheet Mill","the analogy, made literal and mined"],["Geodesic Rail","the straightest possible line, laid"],["Curvature Tong","bends the bend, handles the handle"],["Ricci Flattener","squashes volume growth to zero"],["Weyl Shear","the tidal stretch, sheared for profit"],["Tidal Comb","the differential pull, combed"],["Roche Sieve","the geometry that shatters moons"],["Lagrangian Anchor","parks cargo where gravity agrees"],["L1 Crane","the balance point, leveraged"],["L2 Depot","the far-side warehouse"],["Halo Orbit Ring","the funny circle, institutionalized"],["Manifold Loom","weaves the roads of space"],["Integral Curve Spinner","spins the flow lines to order"],["Killing Vector Rig","the symmetries, harvested"],["Timelike Mill","grinds the paths of the possible"],["Null Cone Comb","the light paths, combed flat"],["Spacelike Wedge","the forbidden slices, cut anyway"],["Chronology Fence","keeps causes before effects"],["Causality Violation Bureau","the paperwork of time crimes"],["Closed Timelike Curves Den","the forbidden loop, waltzed"],["Chronology Horizon Watch","guards the time machine's door"],["Wormhole Bore","the tunnel, drilled through elsewhere"],["Throat Support","the tunnel's structural liner"],["Exotic Matter Pump","the impossible fuel, pumped"],["Traversable Rig","the wormhole you can actually ship through"],["Mouth Anchor","keeps both ends honest"],["Time Dilation Vat","ages cargo slowly, on purpose"],["Twin Paradox Office","settles the argument, bills both"],["Proper Time Meter","your time, precisely invoiced"],["Coordinate Clock","the bookkeeper of simultaneity"],["Lorentz Crusher","fits the fast into the small"],["Gamma Press","the speed factor, compressed"],["Length Contraction Rig","the cargo that shrinks en route"],["Relativity of Simultaneity Mill","grinds 'now' into 'here'"],["Minkowski Cart","the four-dimensional wheelbarrow"],["Spacetime Interval Ledger","the invariant, accounted"],["Tachyon Rake","the hypothetical, raked anyway"],["Superluminal Telegraph","the message that arrives early"],["Antitelephone Paradox Valve","prevents the embarrassing reply"],["Graviton Sieve","the quantum of gravity, sifted"],["Spin-2 Loom","weaves the graviton's requirements"],["Gravitational Wave Net","the ripple, caught mid-flight"],["Chirp Catcher","the merger's rising song"],["Ringdown Bell","the black hole's final note"],["Strain Harvester","the 10^-21 stretch, monetized"],["Interferometer Arm","the four-kilometer ruler"],["LIGO Ear","the globe-spanning microphone"],["Pulsar Timing Comb","the galaxy-wide detector"],["Nanohertz Rig","the slow waves, patiently gathered"],["Memory Effect Bank","the permanent stretch, saved"],["Geodesic Deviation Rig","tracks the stretching lines"],["Bondi News Office","announces each arriving wave"],["Bondi Mass Meter","the energy carried away, billed"],["Quadrupole Foundry","the factory of the waves"],["Superradiant Mill","the rotating amplifier"],["Zeeldovich Rig","the wave that becomes a particle"],["Horizon Telescope Array","the shadow, photographed"],["Photon Ring Polisher","the infinite orbit, shined"],["Causal Diamond Rig","the longest possible experiment"],["Light Clock","the photon between mirrors"]]},{"t":21,"name":"Dimensional Seams","rows":[["Brane Knife","cuts between the worlds"],["Bulk Lifter","raises cargo through the fifth dimension"],["Kaluza Reel","the extra dimension, wound on a spool"],["Klein Hose","the dimension that loops on itself"],["Compact Dimension Awl","pries open the curled-up directions"],["Calabi-Yau Loom","weaves the six hidden dimensions"],["Orbifold Press","the folded space, ironed"],["Conifold Drill","the singular passage, drilled"],["Tunneling Bore","the barrier, politely ignored"],["Barrier Penetration Rig","the wall that lets you pass"],["Evanescent Crane","lifts through the forbidden zone"],["WKB Approximation Mill","grinds the almost-impossible"],["Instanton Foundry","the rare escape, manufactured"],["Spherical Symmetry Press","the perfect assumption, compressed"],["Moduli Stabilizer","keeps the dimensions from drifting"],["Dilation Field Tap","the changing scale, harvested"],["Warped Throat Rig","mines the geometry's narrow gorge"],["Randall-Sundrum Elevator","the infinitely layered garage"],["Gravity Leak Detector","finds where the dimensions drain"],["Gauss Law Meter","the flux, spread too thin"],["Holographic Plate","the universe, stored in 2D"],["AdS Rig","the bounding box of space"],["Boundary Theory Loom","weaves the shadow world"],["Holographic Entropy Plate","the information surface, farmed"],["Bekenstein-Hawking Sieve","sifts the bits of the horizon"],["Entanglement Wedge Shears","cuts the reconstructable region"],["Ryu-Takayanagi Loom","weaves the area into entropy"],["Bulk Reconstruction Crane","rebuilds the inside from the edge"],["Error Correcting Rig","the geometry that fixes itself"],["Quantum Error Weave","the code of the cosmos, tailored"],["Tensor Network Mill","grinds the geometry into graphs"],["MERA Loom","the scale-weaving loom"],["Haar Mill","the perfectly random rotation, milled"],["Scrambler Rig","the fastest possible blender"],["Black Hole Compiler","the information processor, monetized"],["Susskind Press","the horizon's publishing house"],["Horizon Decoder","reads the boundary's fine print"],["Interior Decoder","the inside, translated from the rim"],["Code Subspace Vat","the protected sector, grown"],["Precursor Harvester","the before-image of a black hole"],["Complexity Mill","the growing interior, ground for value"],["Lloyd Clock","the universe's computation meter"],["Margolus-Levitin Rig","the quantum speed limit, enforced"],["Bekenstein Bound Lift","the maximum information, palletized"],["Bremermann Baler","the ultimate bandwidth, baled"],["Landauer Furnace","the bit's smallest heat bill, paid"],["Reversible Logic Loom","computing without the tax"],["Toffoli Gate Foundry","the gate that gives back"],["Fredkin Rig","the conservative computation line"],["Quantum Annealer","the optimizer that tunnels"],["QAOA Loom","weaves the alternating layers"],["Adiabatic Crane","lifts the solution slowly enough"],["Adiabatic Theorem Press","the slow change, guaranteed"],["Berry Curvature Mill","the geometry of the slow path"],["Kato Rig","the degenerate states, managed"],["Holonomy Press","the rotation after the loop"],["Wilczek-Zee Loom","the non-abelian braid, woven"],["Anyon Exchange Crane","swaps the exotic particles"],["Topological Order Mill","the pattern that survives noise"],["Entanglement Distiller","the pure from the impure"],["Decoupling Theorem Rig","the systems politely separated"],["Casimir Waveguide","the vacuum's shaped pressure"],["Brane Welder","the layers, joined"],["Orientifold Press","the mirror sides, glued"]]},{"t":22,"name":"Abstract Mines","rows":[["Axiom Shaft","the unproven, mined directly"],["Lemma Cart","the helpful side-results, hauled"],["Corollary Belt","the obvious, conveyed"],["Theorem Stamp Mill","the heavy results, crushed into use"],["Proof Refinery","removes the hand-waving"],["Conjecture Drill","bores into the suspected"],["Counterexample Trap","catches the lies in the ore"],["Lemma Lattice","the scaffolding, load-bearing"],["Induction Hoist","lifts n to n+1 forever"],["Base Case Kiln","the one brick everything stands on"],["Contradiction Kiln","assume the impossible, fire the furnace"],["Diagonal Saw","cuts the uncountable to size"],["Cantor Rig","the pairing machine, endless"],["Pigeonhole Sorter","the birds that force a roommate"],["Paradox Fence","keeps the liar out of the yard"],["Russell Shaver","the set that shaves itself, barbed"],["Godel Press","the statement that refuses the stamp"],["Completeness Filter","the true but unprovable, strained out"],["Consistency Furnace","burns the contradictory, carefully"],["Compactness Rig","the finite that implies the infinite"],["Los Tube","the ultrapower conveyor"],["Ultrapower Mill","grinds the standard into the nonstandard"],["Transfer Principle Hoist","moves truth across the mirror"],["Overspill Valve","the infinite leaks into the finite"],["Standard Part Sieve","the infinite, sifted to the real"],["Nonstandard Analysis Rig","infinitesimals on payroll"],["Robinson Foundry","casts the ghosts of departed quantities"],["Model Crusher","reduces theory to structure"],["Satisfiability Press","the interpretation that fits, pressed"],["Truth Assignment Mill","the valuation, ground out"],["Interpolation Loom","weaves the missing middle"],["Craig Rig","the bridge between theories"],["Robinson Joint Consistency","two theories, one happy home"],["Amalgamation Crane","lifts models into one another"],["Elementary Embedding Hoist","drops one model inside another"],["Skolem Hull Foundry","the small copy, cast whole"],["Downward Lowenheim Rig","the infinite made countable"],["Upward Loewenheim Mill","the countable made infinite"],["Categoricity Press","the theory with one true shape"],["Morley Rig","the uncountable, made unique"],["Stone Space Loom","weaves the filter of theories"],["Duality Mill","grinds the opposite viewpoints together"],["Galois Correspondence Hoist","the mirror between subfields and groups"],["Automorphism Winch","the symmetry that stays itself"],["Fixed Point Rig","the point that doesn't move"],["Banach Press","the contraction's guaranteed landing"],["Knaster-Tarski Kiln","the monotone map's oven"],["Recursive Sieve","the computable, strained from the rest"],["Turing Mill","grinds the halt-able"],["Lambda Lathe","turns the function into the form"],["Combinator Loom","weaves the application"],["Curry-Howard Foundry","casts proofs as programs"],["Normal Form Press","the term, ironed flat"],["Cut Elimination Mill","the detour, ground away"],["Gentzen Rig","the consistency, finitely witnessed"],["Sequent Crane","lifts both sides of the turnstile"],["Natural Deduction Vat","the assumption soup, rendered"],["Intuitionistic Filter","the excluded middle, strained out"],["Constructive Mill","only builds what it can show"],["Brouwer Rig","the choice sequence, handled"],["Lawvere Fixed Point Rig","the diagonal, generalized"],["Recursion Theorem Crane","the program that knows itself"],["Y Combinator Loom","the self-application, woven safely"],["Oracle Kiln","the answer machine, fired"]]},{"t":23,"name":"Ordinal Foundry","rows":[["Successor Rig","the next one, stamped and shipped"],["Omega Bell","rings in the first infinite hour"],["Limit Crane","hoists the endless sequence to its end"],["Transfinite Hoist","lifts past all the naturals"],["Ordinal Spine","the backbone of order, straightened"],["Well-Order Mill","grinds every set into queue"],["Zermelo Press","the choice, compressed into law"],["Well-Ordering Rig","the proof that any pile can queue"],["Epsilon Forge","where x maps to omega to the x"],["Epsilon-Nought Kiln","the tower that feeds itself"],["Zeta Furnace","the fixed points of the fixed points"],["Eta Foundry","the next plateau of self-reference"],["Veblen Loom","weaves the hierarchy normal"],["Feferman-Schutte Rig","the first strongly critical"],["Gamma Mill","the ordinals that name themselves"],["Ackermann Hoist","the slow climb, mechanized"],["Slow-Growing Trellis","the patient garden, grown"],["Fast-Growing Harvest","the crop that outruns the farm"],["Hardy Rig","the hierarchy, worked to exhaustion"],["Busy Beaver Trap","the uncomputable, caged anyway"],["Rayo Foundry","the number beyond all names"],["Church-Kleene Winch","the computable ceiling, reached"],["Lambda Calculus Anvil","the programs, hammered countable"],["Admissible Ordinal Gate","the proof-theory pass"],["Recursion Theory Sieve","the definable, strained"],["Projectum Rig","the ordinal's projection, measured"],["Cofinality Rail","the shortest path to the top"],["Regular Press","the stairs with no shortcuts"],["Singular Splitter","the long climb, cut short"],["Weakly Compact Rig","the tree that must branch"],["Inaccessible Adit","the door that cannot be built"],["Countable Incompetence Filter","the small below the large"],["Uncountable Regularity Foundry","the stairs beyond counting"],["Aleph Pump","pumps the cardinals upward"],["Beth Smelter","the power set, cast in iron"],["Continuum Winch","the line's true size, winched"],["Hartogs Drill","bores the impossible injection"],[" Lindenbaum Rig","the theory, completed"],["Souslin Line Loom","weaves the possible impossible gap"],["Diamond Sieve","the guessing principle, sifting"],["Square Principle Press","the sequencing, stamped"],["Club Filter Mill","the closed unbounded, ground fine"],["Stationary Set Harvester","the sets that never leave"],["Fodor Press","the pressing down lemma, pressed"],["Mahlo Lock","the regulars inside the regular"],["Reflection Mirror","the universe admiring its levels"],["Montage Loom","the elementary submodels, woven"],["Indescribable Vein","the property beyond properties"],["Indescribable Cutter","the vein, precision cut"],["Pin Down Rig","the indescribable, pinned anyway"],["Erdos Rado Mill","the partition calculus, milled"],["Dushnik-Miller Press","the uncountable, squeezed"],["Partition Sieve","the homogeneous, strained out"],["Ramsey Foundry","the complete disorder, impossible"],["Kurepa Rig","the tree with too many branches"],["Aronszajn Press","the tree with no path"],["Suslin Sieve","the tree with no branch and no level"],["Morass Loom","weaves the gap structure"],["Simplified Morass Mill","the gap, ground manageable"],["Forcing Oven","bakes the extension universe"],["Cohen Rig","the generic, manufactured"],["Collapsing Sieve","the large, made countable"],["Levy Collapse Hammer","the mountain, hammered to a molehill"],["Cantor Pairing Mill","two streams, woven to one"]]},{"t":24,"name":"Tetration Works","rows":[["Tower Kiln","fires the power towers"],["Stack Forge","the exponents, welded skyward"],["Up-Arrow Array","the notation, made physical"],["Double-Arrow Foundry","the towers, mass-produced"],["Triple-Arrow Mill","grinds past every tower"],["Knuth Crane","lifts the arrows by the fleet"],["Hyperoperator Press","the operations beyond operations"],["Ackermann Ladder","the depth, hauled up rung by rung"],["Graham Arm","the reach that defines too far"],["Graham Cracker","a single crumb of the number"],["Recursive Furnace","feeds its own exhaust in"],["Self-Application Rig","the machine that runs itself on itself"],["Fixpoint Kiln","where x becomes 2 to the x"],["Tower Foundation","the bottom of the sky"],["Tower Cap","the top brick of the endless"],["Tower Splicer","welds two towers end to end"],["Tower Feller","cuts one down to size"],["Tower Trimmer","prunes the skyscraper"],["Infinite Exponential Rack","the stack that never lands"],["Convergence Gauge","measures whether the tower stands"],["Divergence Alarm","rings when the tower falls"],["Shell Theorem Rig","the tower's landing zone, proved"],["Euler Rack","the master's assembly line"],["Logarithm Crane","the emergency descent system"],["Slog Meter","the super-logarithm, read aloud"],["Super-Root Saw","cuts the tower to its stump"],["Square Root of a Tower","the tower, halved politely"],["Half-Tower Lathe","turns the tower sideways"],["Linear Approximation Wedge","the tower, estimated and shipped"],["Fractional Iteration Mill","the half-th iterate, milled"],["Continuous Iteration Loom","weaves the iteration smooth"],["Abel Function Rig","the iteration coordinate, fixed"],["Schröder Sieve","the eigenvalue, strained"],["Böttcher Press","the infinity, compressed"],["Julia-Fatou Pipeline","the iteration's geography, plumbed"],["Mandelbrot Rig","the map of all the towers"],["Escape-Time Kiln","the prisoner and the fugitive, sorted"],["Bifurcation Loom","the doubling cascade, woven"],["Feigenbaum Mill","the universal constant, ground"],["Period-Three Press","where chaos becomes inevitable"],["Li-York Rig","the chaos, certified"],["Shadowing Sieve","the fake orbit, sifted to truth"],["Nonwandering Mill","the point that cannot leave"],["Ergodic Loom","weaves the average over time"],["Birkhoff Meter","the time average, read"],["Mixing Furnace","the phase space, stirred to uniform"],["Hyperbolic Press","the stretching and folding, stamped"],["Homoclinic Rig","the tangle that predicts nothing"],["Horseshoe Foundry","the chaos, forged in a fold"],["Smale Hoist","the geometry, lifted to legend"],["Turbulence Model Rack","the storm, shelved"],["Navier-Stokes Mill","grinds the unsolved"],["Reynolds Gauge","the chaos threshold, read"],["Butterfly Depot","the butterfly, boarded and shipped"],["Strange Attractor Loom","weaves the shape of chaos"],["Lorenz Rig","the butterfly's own lathe"],["Rössler Mill","the band, ground into a cycle"],["Dimension Sieve","the fractal dimension, strained"],["Hausdorff Measure Rig","the coastline, measured properly"],["Box-Counting Press","the fractal, stamped into count"],["Koch Foundry","the snowflake, cast in iron"],["Sierpinski Loom","weaves the holes into triangles"],["Menger Rig","the sponge, drilled to perfection"],["Tetration Gauge","measures the tower's lean"]]},{"t":25,"name":"Large Cardinal Quarries","rows":[["Inaccessible Seam","the door past all construction"],["Inaccessible Adit Reinforced","the same door, load-rated"],["Mahlo Stratum","the regulars, dense below"],["Mahlo Drift","the tunnel of many doors"],["Weakly Compact Quarry","the tree that must branch"],["Weakly Compact Press","the indescribable, lightly squeezed"],["Unnameable Vein","the words that cannot capture it"],["Indescribable Mine","the second level of the vein"],["Ineffable Cut","the subset that reflects perfectly"],["Ineffable Rig","the reflection, made total"],["Measurable Quarry","the measure on the universe"],["Measurable Cardinal Press","the 0-1 law, stamped in stone"],["Normal Filter Loom","weaves the closed unbounded"],["Ultrafilter Foundry","casts the two-color decision"],["Rowbottom Rig","the coloring, forced homogenous"],["Keisler Sieve","the ultrapower, strained clean"],["Scott Rig","the theory of the cardinal, weighed"],["Hanf Number Hoist","the compactness ceiling, lifted"],["Vopenka Crane","the variety principle, raised"],["Vopenka's Principle Rig","the class of all, accommodated"],["Woodin Drift","the elementary embeddings, tunneled"],["Woodin Rig","the generic absoluteness, secured"],["Supercompact Borer","the reflection of everything small"],["Strongly Compact Press","the compactness at every language"],["Extendible Shaft","the embedding that reaches any height"],["Extendible Hoist","the tower of embeddings, lifted"],["Huge Press","the technical term, stamped officially"],["Huge Quarry","the almost-universe, opened"],["Rank-Into-Rank Rig","the embedding that stays home"],["Rank-Into-Rank Vein","the deepest seam ever named"],["Berkeley Cardinal Mine","the furthest rumored depth"],["Reinhardt Rig","the choice-breaking pick"],["Choice Axiom Mill","the well-ordering, ground to law"],["Well-Ordering Press","the universe, queued"],["Banach-Tarski Foundry","the sphere, duplicated for profit"],["Hahn-Banach Rig","the functional, extended"],["Ultrafilter Ledger","the decisions, all accounted"],["Determinacy Drum","the game, settled for every path"],["Borel Determinacy Mill","the payoff, ground to victory"],["Projective Determinacy Rig","the lightface games, refereed"],["AD Foundry","the axiom of determinacy, cast"],["Wadge Loom","weaves the hierarchy of sets"],["Perfect Set Sieve","the uncountable, strained from the countable"],["Prewellordering Press","the ranks, stamped in order"],["Scale Rig","the norms, weighed together"],["Suslin Tree","the tree, forced to branch"],["Kondo Rig","the uniformization, ironed"],["Martin's Axiom Mill","the forcing, ground gentle"],["MA Press","the continuum, mildly controlled"],["CH Fence","the hypothesis, fenced off for now"],["Negated CH Gate","the continuum, set loose"],["Easton Rig","the continuum function, tuned"],["Forcing Loom","weaves the extension universe"],["Generic Filter Foundry","the filter that meets every dense set"],["Cohen Forging","the new reals, hammered thin"],["Random Real Kiln","the measure-one, baked in"],["Sacks Rig","the minimal real, perfected"],["Hechler Press","the dominating real, stamped"],["Solovay Furnace","the inaccessible, burned away to make every set nice"],["Zero Sharp Hoist","the indiscernibles, lifted to daylight"],["Zero Dagger Rig","the sharper truth, mined"],["Mouse Foundry","the inner model, cast whole"],["Core Model Rig","the universe's honest skeleton"],["Sharper Image Rig","the reflection, burnished"]]},{"t":26,"name":"Proof Refineries","rows":[["Stability Furnace","the theory, kept non-explosive"],["Soundness Filter","the provable, strained from the true"],["Completeness Press","the valid, stamped provable"],["Independence Mill","the statement, ground free of the theory"],["Undecidable Sorter","the neither-nor, catalogued"],["Halting Oracle Kiln","the stop-or-spin, fired to an answer"],["Truth Predicate Vat","the truth, grown but not swallowed"],["Tarski Baffle","the undefinability, contained"],["Liar Containment Rig","the paradox, safely caged"],["Reflecting Array","the universe's mirrors, aligned"],["Reflection Oven","bakes the level that mirrors its levels"],["Cut Eliminator","the proof's detours, ground away"],["Gentzen Crane","the ordinal measure, lifted to daylight"],["Epsilon-Nought Rig","the consistency witness, weighed"],["Sequent Press","the turnstile, stamped"],["Subformula Sieve","the proof, strained to its parts"],["Herbrand Rig","the witnesses, extracted"],["Skolem Mill","the witnesses, ground free"],["Unification Loom","weaves the terms together"],["Resolution Furnace","the clauses, burned to contradiction"],["Robinson Rig","the prime implicant, isolated"],["Tableaux Press","the branch, forced to close"],["DPLL Kiln","the assignment, baked by branching"],["CDCL Foundry","the conflict, forged into a lesson"],["Proof Certificate Loom","the check, woven small"],["Proof Assistant Rig","the mathematics, machine-witnessed"],["Lean Foundry","the type, cast as theorem"],["Coq Press","the gallia of proofs, stamped"],["Isabelle Loom","the logic, woven polymorphic"],["Curry-Howard Furnace","the proof and the program, fused"],["Propositions-As-Types Rig","the claim, mined as code"],["Normalization Mill","the term, ground to normal"],["Strong Normalization Press","every path, guaranteed to land"],["Canonical Form Foundry","the answer, cast uniquely"],["Decidable Equality Sieve","the same-or-not, strained to a yes"],["Type Inference Loom","the type, woven automatically"],["Principal Type Rig","the most general, isolated"],["Parametricity Press","the free theorem, stamped"],["Free Theorem Foundry","the type's promise, cast"],["Initial Algebra Kiln","the induction, fired lawful"],["Terminal Coalgebra Mill","the coinduction, ground infinite"],["Lambda Cube Rig","the dimension of abstraction, rotated"],["Dependent Type Loom","the proof, woven into the data"],["Univalence Foundry","the identity of structures, cast"],["HoTT Elevator","the types, lifted to spaces"],["Homotopy Press","the path, stamped composable"],["Path Induction Rig","the base point, moved anywhere"],["Univalent Sieve","the equivalent, strained to equal"],["Cubical Kiln","the computational univalence, fired"],["Two-Level Type Theory Mill","the strict and the weak, ground together"],["Proof Irrelevance Press","the witness, stamped anonymous"],["Prop Rig","the mere truth, housed cheaply"],["Squash Sieve","the information, strained to one bit"],["Modality Loom","the necessity and possibility, woven"],["S4 Rig","the modality, iterated lawfully"],["Double Negation Mill","the not-not, ground to maybe"],["Continuation Press","the control, stamped into type"],["Classical Floor","the excluded middle, laid as tile"],["Intuitionistic Wing","the construction, built beside it"],["Linear Wing","the resource, spent exactly once"],["Affine Rig","the resource, spent at most once"],["Relevant Mill","every hypothesis, ground into use"],["Ordered Logic Loom","the sequence, woven to order"],["Proof Length Press","the long argument, compressed"]]},{"t":27,"name":"Set-Theoretic Void","rows":[["Empty Set Vacuum","the nothing, packaged"],["Null Shovel","scoops the pure absence"],["Void Bag","carries what isn't there"],["Nothing Distillery","the absence, refined to purity"],["Vacant Foundry","casts the hollow product"],["Von Neumann Crane","lifts the ordinals into sets"],["Ordinal Spine Loom","weaves the order into membership"],["Cumulative Hierarchy","the universe, built floor by floor"],["Rank Hoist","the height of a set, measured and lifted"],["Foundation Shaft","the dig that always bottoms out"],["Foundation Rig","the circular sets, barred at the gate"],["Extensionality Press","the identity, stamped by members"],["Extensional Sieve","the duplicates, strained away"],["Pairing Loom","weaves two into one set"],["Union Foundry","the members' members, gathered"],["Union Rig","the merge, fired and shipped"],["Power Set Kiln","the subsets, baked to a set"],["Power Set Press","the doubling, stamped lawful"],["Separation Sieve","the property, strained from the whole"],["Replacement Hoist","the image, lifted to set-hood"],["Replacement Foundry","the function's range, cast"],["Infinity Gate","the first endless set, admitted"],["Infinity Mill","grinds the endless into one object"],["Choice Rack","the representatives, shelved"],["Choice Rig","one from each, always"],["Foundation Cap","the well-founded crown"],["Transitive Closure Crane","the ancestry, enclosed"],["Transitive Set Vat","the through-and-through, contained"],["Subset Relation Loom","weaves the partial order"],["Membership Graph Press","the arrow structure, stamped"],["Vopenka Valve","the class-sized admission control"],["Grothendieck Crane","the universe-lift for the ambitious"],["Universe Bag","the room where all the math fits"],["Inaccessible Universe","the door within the door"],["Topos Kiln","the mathematical universe, fired to spec"],["Sheaf Comb","the local data, combed to global"],["Etale Cover","the lid that fits locally"],["Site Loom","weaves the coverage"],["Stack Rack","the glued families, shelved"],["Bundle Foundry","the fibers, cast over the base"],["Fiber Press","the slice, stamped compact"],["Section Rig","the continuous choice, cut cleanly"],["Descent Mill","the gluing data, ground to a sheaf"],["Sieve Kiln","the covering families, fired"],["Grothendieck Topology Press","the notion of cover, stamped"],["Subobject Classifier","the truth object, isolated"],["Subobject Loom","weaves the monics into truth"],["Exponential Rig","the function space, assembled"],["Cartesian Closure Press","the product and power, fused"],["Topos Mirror","the geometry reflected as logic"],["Internal Language Loom","the topos, woven into speech"],["Mitchell-Benabou Rig","the internal truth, mined directly"],["Kripke-Joyal Sieve","the local validity, strained"],["Forcing Topos Foundry","the extension, cast categorically"],["Classifying Topos Press","the theory, stamped geometric"],["Pointless Topology Mill","the space, ground to its lattice"],["Locale Loom","weaves the space from open reasoning"],["Frame Press","the opens, stamped as a lattice"],["Pointfree Sieve","the points, strained away entirely"],["Formal Topology Rig","the cover, built constructively"],["Predicative Wing","the self-reference, walled off"],["Impredicative Foundry","the circle, cast anyway"],["Constructive Void Mill","grinds the nothing, without choice"],["Empty Loom","weaves the empty set's clothes"]]},{"t":28,"name":"The Absolute","rows":[["The Idea Of Ore","mined before it exists"],["Definition Forge","casts the thing by naming it"],["Concept Mill","grinds the abstract to powder"],["Essence Rig","the property, isolated in vacuum"],["The Map Itself","the territory, folded inside"],["Territory Of Maps","the land that is only drawn"],["Self-Reference Hoist","the sentence, lifted by its own claim"],["Strange Loop Winch","the staircase that spirals level"],["Tangled Hierarchy","the levels, braided shut"],["Godel's Microphone","the system, made to hear itself"],["Quine Kiln","the program that prints itself"],["Quine Press","the self-description, stamped"],["Diagonal Mirror","the reflection that excludes itself"],["Cantor's Ghost Rig","the diagonal, haunting size itself"],["Berry Press","the name too short to name it"],["Richard's Paradox Mill","grinds the describable to contradiction"],["König's Rig","the finitely-many exception, leveraged"],["Grelling's Foundry","the heterological word, cast and shelved"],["Liar Furnace","the false sentence, burned for warmth"],["Truth Teller Kiln","the honest sentence, fired alone"],["Modal Fictionalist Rig","the entity, mined as if real"],["Fictional Ore Mill","the story, ground to currency"],["Pretense Foundry","the make-believe, cast in ingots"],["Anti-Realist Press","the truth, stamped merely useful"],["Instrumentalist Loom","the theory, woven as a tool"],["Nominalist Sieve","the universals, strained away"],["Platonist Shaft","the perfect forms, mined at depth"],["Form Registration Desk","the eternal, filed by shape"],["Ideal Type Foundry","the archetype, cast perfectly"],["Phenomenal Rig","the appearance, mined directly"],["Noumenon Vein","the thing-in-itself, struck at last"],["Categorical Imperative Press","the duty, stamped universal"],["Utility Mill","grinds the good into numbers"],["Experience Machine","the pleasure, manufactured honestly"],["Mary's Room Kiln","the color, learned secondhand"],["Philosophical Zombie Rig","the behavior, mined without mind"],["Chinese Room Foundry","the understanding, staged in symbols"],["Turing Test Loom","weaves the impersonation"],["Ship Of Theseus Dock","the identity, rebuilt plank by plank"],["Sorites Sieve","the heap, strained grain by grain"],["Theseus Crane","the original, lifted from the copies"],["Teleporter Press","the self, stamped at arrival"],["Personal Identity Mill","grinds the continuity to powder"],["Ontological Press","the existence, stamped from concept alone"],["Cosmological Rig","the first cause, cranked to start"],["Fine-Tuning Loom","the constants, woven to fit"],["Boltzmann Brain Foundry","the random mind, cast and confused"],["Simulation Rig","the substrate, audited from inside"],["Simulation Inception Mill","the dream, ground one level deeper"],["Dream Argument Kiln","the doubt, fired to certainty"],["Evil Demon Trap","the deceiver, caged by hypothesis"],["Brain In A Vat Press","the world, stamped secondhand"],["Mind Projection Rig","the experience, mined as the world"],["Solipsist Foundry","the only mine, staffed by one"],["Absurd Mill","grinds the meaning to nothing, cheerfully"],["Camus Press","the absurd, stamped heroic"],["Nietzsche Hoist","the value, re-lifted from ruin"],["Eternal Recurrence Rack","the shift, repeated exactly"],["Amor Fati Loom","weaves the fate into acceptance"],["Wu Wei Rig","mining accomplished by not mining"],["Dao Mill","the way, ground without grinding"],["Zen Rake","the garden, combed into stillness"],["The Last Seam","the dig that ends all digging"],["The Absolute","what remains when the miner stops"]]}];
+const BUILDINGS=[];
+const TIER_META=[];
+(function(){
+  // Strata 1-13: wide-spaced but REWARDING — x4 price steps, x15 tier walls,
+  // while cps climbs x3.6 per step and x8000 per wall, so payback stays ~150s
+  // through the whole ladder (cost/reward ratio never collapses).
+  // Strata 14-28: tower strata — cost towers 10^^3..10^^140, cps ONE layer
+  // under cost (buffed): a bought-out tower stratum lifts income to its wall.
+  const IDX_COST=4, IDX_CPS=3.6, WALL_C=15, WALL_P=8000;
+  const NORM=13;
+  const TWL=[3,11,25,32,36,40,45,50,55,60,70,80,95,115,140];  // tower heights, strata 14..28
+  const TL=t=> Math.log10(15)+t*(63*Math.log10(IDX_COST)+Math.log10(WALL_C));
+  const TC=t=> Math.log10(0.1)+t*(63*Math.log10(IDX_CPS)+Math.log10(WALL_P));
+  BLD_RAW.forEach((tr,ti)=>{
+    TIER_META.push({i:ti,name:tr.name});
+    const tw=ti>=NORM ? TWL[ti-NORM] : 0;
+    tr.rows.forEach((r,mi)=>{
+      let base, cps;
+      if(ti<NORM){
+        base=BN.fromLog10(TL(ti)+mi*Math.log10(IDX_COST));
+        cps=BN.fromLog10(TC(ti)+mi*Math.log10(IDX_CPS));
+      }else{
+        base=BN.tetr(tw).mul(BN.fromLog10(mi*Math.log10(4)));       // same tower, mantissa steps
+        cps=BN.tetr(Math.max(2,tw-1)).mul(BN.fromLog10(mi*Math.log10(3.6)));
+      }
+      BUILDINGS.push({
+        id:'t'+String(ti+1).padStart(2,'0')+'m'+String(mi).padStart(2,'0'),
+        tier:ti, name:r[0], desc:r[1], base, cps,
+      });
+    });
+  });
+})();
+function costOf(b){
+  const n=S.b[b.id]||0;
+  return b.base.mul(BN.fromLog10(n*Math.log10(1.15))).mul(resCache.machDisc);
+}
+function buyBuilding(id,n){
+  const b=BUILDINGS.find(x=>x.id===id);
+  let bought=0;
+  for(let i=0;i<n;i++){
+    const c=costOf(b);
+    if(S.ores.lt(c)) break;
+    S.ores=S.ores.minus(c);
+    S.b[id]=(S.b[id]||0)+1;
+    bought++;
+  }
+  if(bought){ if(n>=10) S.shiftBuys++; dirtyCPS(); refreshUI(); }
+}
+function paybackStr(b,cost){
+  if(cost.L>=2) return 'tower scale';
+  const m=effMult();
+  if(m.L>=2) return 'instant';
+  const pb=cost.log10i()-b.cps.log10i()-m.log10i();
+  if(!isFinite(pb)) return 'tower scale';
+  if(pb<0) return 'instant';
+  if(pb>12) return 'payback ~'+BN.fromLog10(pb).fmt()+'s';
+  const s=Math.pow(10,pb);
+  return 'payback '+(s<10?s.toFixed(1):Math.floor(s).toLocaleString())+'s';
+}
+
+/* ============ RESEARCH — 13 milestones + 10 families, all hand-written ============ */
+const RES_RAW={"milestones":[{"id":"m1","name":"Calloused Grip","desc":"clicks x3","cost":500,"eff":{"k":"clickMul","v":3}},{"id":"m2","name":"Tendons Of Iron","desc":"clicks ^1.5","cost":50000,"eff":{"k":"clickPow","v":1.5}},{"id":"m3","name":"First Refinery","desc":"ALL gains x2","cost":200000,"eff":{"k":"allMul","v":2}},{"id":"m4","name":"Nerve Loop","desc":"clicks +1% of auto/s","cost":2000000,"eff":{"k":"cpsPct","v":0.01}},{"id":"m5","name":"Overclocked Loop","desc":"clicks +4% of auto/s","cost":500000000,"eff":{"k":"cpsPct","v":0.04}},{"id":"m6","name":"Forge Paradox","desc":"ALL gains ^1.2","cost":10000000000,"eff":{"k":"allPow","v":1.2}},{"id":"m7","name":"Thousandfold Cascade","desc":"ALL gains x1e3","cost":1e+30,"eff":{"k":"allMul","v":1000}},{"id":"m8","name":"Tempered Ambitions","desc":"ALL gains ^1.15","cost":1e+80,"eff":{"k":"allPow","v":1.15}},{"id":"m9","name":"First Tower","desc":"ALL gains x10^^5","cost":"E400","eff":{"k":"allTetr","v":5}},{"id":"m10","name":"Tower Cascade","desc":"ALL gains x10^^8, stacks","cost":"TETR4","eff":{"k":"allTetr","v":8}},{"id":"m11","name":"Skypiercer","desc":"ALL gains x10^^25, stacks","cost":"TETR12","eff":{"k":"allTetr","v":25}},{"id":"m12","name":"Beyond","desc":"ALL gains x10^^315 — max the system","cost":"TETR35","eff":{"k":"allTetr","v":315}},{"id":"m13","name":"Seismic Sense","desc":"golden voxels linger 4s longer","cost":10000,"eff":{"k":"goldenLinger"}}],"families":[{"id":"grip","name":"Grip","blurb":"clicks x2 each","start":1000,"growth":35,"eff":{"k":"clickMul","v":2},"nodes":[["Callused Palms","the beginner's medal"],["Blister Kit","moleskin and denial"],["Wrist Wraps","certainty for the joints"],["Chalk Bag","dry hands, honest work"],["Wide Stance","planted like a claim"],["Follow-Through","finish the swing"],["Heel Strike","the ground cooperates"],["Hip Rotation","power has a address"],["Tendon Fuel","collagen on the schedule"],["Bone Density","the frame, reinforced"],["Isometric Habit","strength while standing still"],["Farmer's Walk","carry the problem away"],["Plate Pinch","thumb of the law"],["Thick Bar","hard mode, always"],["Sledge Swings","rhythm against the tire"],["Tire Flips","the dirt's deadlift"],["Stone Lift","the round burden"],["Log Carry","shoulders learn geometry"],["Anvil Row","old iron, new back"],["Sled Drag","the horizon on a chain"],["Sandbag Hug","weight that fights back"],["Crusher Run","spring the grippers shut"],["Explosive Hip","the jump that lifts hills"],["Double Overhand","no hooks, no excuses"],["Hook Grip","thumb under the bar"],["Mixed Grip","one of each, legally"],["Strap Free","the grip that signs its name"],["Monkey Grip","hang like it's easy"],["Pinch Plates","two smooth coins of iron"],["Blob Lift","half a hundredweight of round"],["Hub Lift","the center of the plate"],["Rolling Thunder","one thick handle, one turn"],["Captains Course","the grippers that grade men"],["Magnusson Routine","blocks, straps, and patience"],["Iron Mind","the brand of the serious"],["Steel Benders","horseshoes, bent for show"],["Nail Snapper","the short red iron"],["Horseshoe Bend","luck, folded in half"],["Scrolling Steel","the blacksmith's signature"],["Red Nail","the bend that certifies"],["The Inch Dumbbell","172 pounds of awkward"],["Apollon's Wheels","the legend's railway wheels"]]},{"id":"dup","name":"Duplication","blurb":"ALL gains x2 each","start":500000,"growth":900000,"eff":{"k":"allMul","v":2},"nodes":[["Second Shift","the mine never sleeps now"],["Night Crew","headlamps in the dark"],["Weekend Rotation","even sunday pulls ore"],["Split Lunch","eat while the lines run"],["Standing Desk","management learns to lean"],["Hot Bunking","one bed, two dreams"],["Double Booked","two claims, one mule"],["Spare Parts Bin","the future, shelved"],["Backup Generator","insurance that hums"],["Redundant Everything","twice the pipes, half the worry"],["Parallel Lines","two drifts, one mountain"],["Mirror Shift","the other crew, reflected"],["Ghost Crew","payroll swears they're real"],["Split Fleet","the trucks divide like cells"],["Twin Pits","symmetry, at industrial scale"],["Siamese Shafts","one headframe, two holes"],["Copy Room","blueprints, breeding"],["Carbon Paper","the 1890s hologram"],["Mimeograph","the purple ink era"],["Stencil Set","cut once, print forever"],["Roneo Drum","the office's first clone"],["Photocopier","light, static, repetition"],["Duplicator League","a guild of exact copies"],["Clone Bay","the shift that grows itself"],["Mirror Matter","the reflection clocks in"],["Shadow Payroll","the other you, employed"],["Echo Crew","they answer before you call"],["Second Opinion","the engineers, doubled"],["Both Barrels","the metaphorical shotgun"],["Twin Pistons","the engine's heartbeat squared"],["Double Crank","twice the stroke per thought"],["Dual Carbs","the engine eats with two mouths"],["Twin Turbo","lag, eliminated twice"],["Afterburner","the duplicate as propulsion"],["Double Down","the wager on oneself"],["All In","every copy, committed"],["House Money","the duplicates' profit, reinvested"],["Printer Goes Brrr","the sound of compounding"],["Mitosis Model","the mine divides"],["Budding Wing","the ore grows its own ore"],["Fork The Process","the operating system, split"],["Recursive Hiring","the recruiter recruits himself"]]},{"id":"nerve","name":"Nerve","blurb":"clicks x3 each","start":10000000,"growth":3200,"eff":{"k":"clickMul","v":3},"nodes":[["Reflex Arc","the shortcut through the spine"],["Twitch Fiber","the fast muscle, favored"],["Fast Twitch","the whole family recruited"],["Nerve Sheath","insulation for thought"],["Myelin Wrap","the signal, accelerated"],["Motor Unit","one nerve, many fibers"],["Recruitment Pattern","the orchestra conducted"],["Rate Coding","frequency as force"],["Proprioception","the body's sixth sense"],["Vestibular Tune","balance, calibrated"],["Hand-Eye Loop","the pick finds the seam alone"],["Reaction Test","the ruler always caught"],["Fly Swatter","the empty-handed veteran"],["Arcade Cabinet","quarters spent on reflexes"],["Frame Data","the game memorized to the millisecond"],["Aim Trainer","the cursor obeys"],["No Scope","the impossible shot, routine"],["Piano Fingers","independence of the digits"],["Drum Wrists","the rudiments, forever"],["Typist Digits","the keyboard as instrument"],["Morse Fist","the operator's timing"],["Surgeon Steady","hands that do not exist"],["Watchmaker Touch","the movement assembled blind"],["Safecracker Feel","the tumblers, heard"],["Braille Reader","the dots, at fingertip speed"],["Pianist Span","the octave plus a dream"],["Four-Limb Split","the drummer's independence"],["Octopus Arms","the nerves distributed"],["Hundred Arms","the shard-throwing machine"],["Premonition Twitch","the flinch before the event"],["Dodge Rain","the storm, politely declined"],["Catch Arrow","the legend, verified"],["Catch Bullet","the legend, upgraded"],["Catch Light","the legend, reified"],["Catch Cause","the effect, caught first"],["Zero Latency","the delay deleted"],["Negative Latency","the answer precedes the ask"],["Time Stamp Rig","the reflex, notarized"],["Spinal Delegation","the brain skipped entirely"],["Autonomic Peak","the reflex owns the mine"],["Pupillary Reflex","the light, answered instantly"],["Startle Rig","the jump, monetized"]]},{"id":"pay","name":"Payroll","blurb":"ALL gains x2.5 each","start":1000000000000,"growth":300000000000000,"eff":{"k":"allMul","v":2.5},"nodes":[["Nickel Raise","the smallest possible motivation"],["Cost Of Living Bump","inflation, personally addressed"],["Overtime Sheet","the hours, sanctified"],["Holiday Pay","the feast, financed"],["Hazard Pay","the danger, itemized"],["Profit Share","the crew eats what it digs"],["Stock Option","the promise, in writing"],["Founder Shares","the mine's earliest believers"],["Preferred Stock","the dividends with tenure"],["Dividend","the money that returns"],["Buyback","the mine trusts itself"],["Leveraged Buyout","the mine buys the mine"],["Hostile Bid","the mine buys the neighbor"],["Tender Offer","the envelope, opened"],["Poison Pill","the defense, swallowed anyway"],["Golden Parachute","the exit, upholstered"],["Proxy Fight","the votes, marshalled"],["Board Seat","the table with the opinions"],["Audit Pass","the books, certified clean"],["Triple Entry","the ledger that watches itself"],["Contango Roll","the future priced kindly"],["Futures Hedge","the risk, fenced"],["Options Straddle","both directions, owned"],["Compound Interest","the eighth wonder, hired"],["Rule Of 72","the doubling, scheduled"],["Amortization","the debt, digested"],["Depreciation","the tools, aged profitably"],["Debt Facility","the hole that funds the holes"],["Credit Line","the bank believes in rocks"],["Bond Issue","the mine's paper, trusted"],["Yield Curve","the future, arched"],["Sovereign Wealth","the mine buys a country"],["Owns The Mint","the money is now a formality"],["Prints The Money","the formality is now art"],["Defines The Money","the art is now mathematics"],["Currency Union","all mines, one wallet"],["Meta Ledger","the accounting of accounting"],["Self-Escrow","the mine pays itself forward"],["Negative Interest","the bank pays to be owed"],["Fourth Quadrant","the cash flows, charted in a dream"],["Infinite Escrow","the payment forever pending"],["The Final Dividend","existence, distributed"]]},{"id":"feed","name":"Feedback","blurb":"clicks +0.5% of auto/s each","start":200000,"growth":12,"eff":{"k":"cpsPct","v":0.005},"nodes":[["Echo","the valley answers back"],["Reflection","the signal meets itself"],["Feedback Whine","the microphone's complaint"],["Howl Round","the loop, closed and loud"],["Standing Wave","the string's favorite shape"],["Resonance","the bridge fears this word"],["Sympathetic String","the unplucked string hums"],["Overtone","the hidden note, audible"],["Harmonic Series","the integers, made audible"],["Undertone","the bass beneath the bass"],["Beat Frequency","the wobble of near-twins"],["Doppler Shift","the pitch of approach"],["Phase Lock","two clocks, one heartbeat"],["Entrainment","the pendulums agree"],["Circadian Sync","the mine's rhythm, biological"],["Pendulum Pair","the wall between them removed"],["Metronome Army","one hundred ticks, aligned"],["Crowd Clap","the applause finds itself"],["Stadium Wave","ten thousand, one gesture"],["Flash Mob","the choreographed spontaneity"],["Trend Cycle","the mine memes itself"],["Viral Loop","each ore ships more ore"],["Network Effect","the value of joining, compounding"],["Compounding","the interest on interest"],["Snowball","the hill's investment strategy"],["Avalanche","the snowball's graduation"],["Flywheel","heavy to start, unstoppable after"],["Ratchet","progress that refuses reverse"],["Vortex","the drain that organizes water"],["Whirlpool","the vortex, with ambitions"],["Maelstrom","the whirlpool, mythologized"],["Event Horizon Spin","the feedback even light obeys"],["Karmic Return","the digger dug by his ditch"],["Boomerang","the throw that corrects itself"],["Sowing Reaping","the field's gentle feedback"],["Cause Effect","the oldest loop of all"],["Mirror Mirror","the reflection, consulted daily"],["Strange Loop","the level that climbs to itself"],["Bootstrap Lift","the mine lifts itself by its boots"],["Self Reference","this description buys itself"],["Ouroboros","the mine devours its own tail"],["Standing Ovation","the clapping feeds itself"]]},{"id":"adren","name":"Adrenaline","blurb":"frenzy +1.5s each","start":5000000,"growth":7,"eff":{"k":"frenzyAdd","v":1.5},"nodes":[["Coffee Break","the legal stimulant"],["Double Espresso","the barista's raised eyebrow"],["Cold Plunge","the shock that sharpens"],["Deep Breath","the four-second reset"],["Second Wind","the lie that comes true"],["Third Wind","the sequel's sequel"],["Fourth Wind","the franchise continues"],["Tailwind","the storm at your back"],["Slipstream","the pocket of easy air"],["Home Stretch","the crowd rises"],["Overtime Drive","the clock is a suggestion"],["Injury Time","the extra minutes, earned"],["Buzzer Beater","the shot at zero"],["Extra Innings","baseball's answer to mortality"],["Sudden Death","the format that ends debates"],["Extra Time","the pitch's overtime"],["Photo Finish","the chest, thrust"],["Cliffhanger","the episode ends anyway"],["Commercial Break","the suspense, monetized"],["Intermission","the opera's coffee"],["Encore","the audience refuses the end"],["Double Bill","two shows, one ticket"],["Director's Cut","the version with more"],["Extended Edition","twenty minutes more"],["Unrated Cut","the scenes the studio feared"],["Bonus Track","the album's secret"],["Hidden Track","the silence before the surprise"],["Secret Level","the game beneath the game"],["New Game Plus","the sword you keep"],["Post Credits","the chair, stayed in"],["Post Post Credits","the joke after the joke"],["Slow Motion Replay","the instant, stretched"],["Bullet Time","the dodge, dramatized"],["Time Dilation Field","the moment, preserved"],["Adrenal Gland Rig","the organ, overclocked"],["Fight Or Flight","both chosen simultaneously"],["Second Pulse","the heart's backup rhythm"],["Runner's High","the pain's apology"],["Flow State","the difficulty, perfectly matched"],["Zone Entry","the self, left at the door"],["Bullet Zone","the zone, permanent residency"],["Overtime Goal","the equalizer in minute 90"]]},{"id":"luck","name":"Fortune","blurb":"golden payouts x1.15 each","start":100000000,"growth":5,"eff":{"k":"goldMul","v":1.15},"nodes":[["Rabbit's Foot","the rabbit disagrees"],["Horseshoe","points up, obviously"],["Four-Leaf Clover","three thousand to one"],["Lucky Penny","found heads-up"],["Wishbone","the dry half wins"],["Shooting Star","the wish, filed mid-fall"],["Birthday Candles","the smoke carries the request"],["Eyelash","the fallen one, blown"],["Wish Well","the water keeps the change"],["Fortune Cookie","the lucky numbers, circled"],["Lottery Scratch","the coin, warmed first"],["Raffle Stub","the call, awaited"],["Bingo Dauber","the ink of destiny"],["Slot Arm","the one-armed tax"],["Jackpot Bell","the sound that stops the room"],["Royal Flush","the hand of the honest liar"],["Inside Straight","the draw that shouldn't"],["Hole In One","the drive, witnessed"],["Scratch Ace","the prize revealed at the nail"],["Perfect Bracket","the impossible office pool"],["Casino Comp","the room, gratis"],["High Roller","the pit boss knows the name"],["Whale Status","the ocean's best customer"],["House Edge","the advantage, borrowed"],["Card Counting","the arithmetic of patience"],["Advantage Play","the loophole, exploited kindly"],["Skill Claw","the plush, retrieved"],["Carnival Ring Toss","the bottle's lean, studied"],["Carny Whisperer","the game, beaten politely"],["Fountain Coin","the wish, compounded"],["Manifestation Board","the future, collaged"],["Lucky Sock","unwashed, undefeated"],["Ritual Routine","the left boot first"],["Sacrifice To RNG","the dice, appeased"],["Dice That Pass","the bones, anointed"],["Seven Eleven","the come-out roll"],["Snake Eyes Party","the failure, celebrated"],["Gambler's Fallacy","the fallacy, embraced anyway"],["Expected Value","the math, on your side"],["Gambler's Ruin","the ruin, scheduled for the house"],["House Always Wins","except today"],["Winner Winner","dinner, awarded"]]},{"id":"mem","name":"Memory","blurb":"offline cap +30min each","start":1000000000,"growth":60,"eff":{"k":"offCap","v":1800},"nodes":[["Night Watchman","the rounds at two am"],["Flashlight Rounds","the beams through the drift"],["Log Book","the shift, recorded"],["Time Card","the punch, ceremonious"],["Punch Clock","the machine that remembers"],["Alarm Clock","the promise at dawn"],["Snooze Button","the promise, renegotiated"],["Dream Shift","the mine that runs asleep"],["Sleepwalking Crew","the ore, moved unconsciously"],["Moon Shift","the tide's timetable"],["Owl Shift","the hoots as roll call"],["Graveyard Shift","the name, unearned but kept"],["Ghost Shift","the machinery runs cold"],["Skeleton Crew","the bones of the operation"],["Dead Of Night","the deepest hour, worked"],["Small Hours","the clock's quiet confessions"],["Witching Hour","the ore glows brighter, supposedly"],["Overtime Nap","the stolen minutes"],["Power Nap","the twenty-minute miracle"],["Deep Sleep","the slow waves of repair"],["REM Cycle","the dream's schedule"],["Hibernation","the mine winters over"],["Torpor","the hummingbird's economy"],["Suspended Animation","the pause that pays"],["Cryo Nap","the cold that keeps"],["Time Capsule","the present, buried for the future"],["Sleeper Agent","the mine, activated by keyword"],["Long Nap","the century's rest"],["Rip Van Winkle","the beard, grown in one shift"],["Forty Winks","the wink, multiplied"],["Forty-One Winks","the extra one, secret"],["Eight Hours","the doctor's advice, obeyed"],["Nine Hours","the luxury tier"],["Ten Hours","the weekend's ambition"],["Weekend","the invention of 1926"],["Vacation Day","the ore forgives"],["Sabbatical","the year, taken whole"],["Gap Year","the mine finds itself"],["Leave Of Absence","the absence, productive"],["Retirement Plan","the mine mines without you"],["Trust Fund Shift","the heirs collect the ore"],["Perpetual Estate","the mine outlives memory itself"]]},{"id":"hag","name":"Haggle","blurb":"machinery costs x0.985 each","start":1000000,"growth":2500,"eff":{"k":"machDisc","v":0.985},"nodes":[["Firm Handshake","the deal, sealed manually"],["Eye Contact","the discount, unblinking"],["Silence Tactic","the pause that lowers price"],["The Flinch","the wince that saves thousands"],["Lowball Offer","the insult that starts negotiation"],["Anchor Price","the first number, planted"],["Bundle Deal","the package, assembled"],["Volume Discount","the crates, negotiated"],["Cash Upfront","the money, waving"],["Invoice Terms","the net-90, extended"],["Supplier Lock","the contract, exclusive"],["Bulk Order","the pallet price"],["Container Price","the shipping, owned"],["Charter Rate","the boat, whole"],["Spot Market","the dip, bought"],["Futures Contract","the price, locked today"],["Monopsony","the only buyer in town"],["Vertical Integration","the supplier, acquired"],["Own The Supplier","the invoice, eliminated"],["Own The Supply","the concept of cost, revised"],["Own The Concept Of Price","the tag, rewritten"],["Barter Back","the trade, reversed"],["Trade Routes","the paths, monopolized"],["Tariff Labyrinth","the maze, navigated"],["Duty-Free Dock","the port, befriended"],["Bazaar Voice","the merchant's respect"],["Silk Road Ledger","the ancient margin"],["Merchant Guild","the prices, agreed upon"],["Arbitrage Loop","the gap between markets, harvested"],["Triangular Trade","the three-cornered profit"],["Invoice Factoring","the future payment, now"],["Zero-Bid Auction","the win, unclaimed by others"],["Dutch Auction Snipe","the clock, read perfectly"],["Silent Auction Prowl","the paddle, unraised"],["Wholesale License","the middleman, retired"],["Direct From Quarry","the pit, called personally"],["Employee Discount","the badge, abused"],["Friends And Family","the coupon, familial"],["Loyalty Program","the points, converted to ore"],["Coupon Cascade","the scissors, professional"],["Price Match Guarantee","the competitor, quoted"],["Loss Leader","the bait, taken cleanly"]]},{"id":"sch","name":"Scholarship","blurb":"research costs x0.99 each","start":10000000000,"growth":6000000,"eff":{"k":"resDisc","v":0.99},"nodes":[["Library Card","the plastic key to everything"],["Overdue Fine","the tuition of curiosity"],["Used Textbook","the previous owner's notes, free tutoring"],["Margin Notes","the conversation with the dead author"],["Index Cards","the knowledge, shuffled"],["Highlighter","the emphasis, fading in four years"],["Flash Cards","the recall, drilled"],["Practice Test","the fear, rehearsed"],["Study Group","the snacks, academic"],["Tutor Session","the confusion, outsourced"],["Office Hours","the professor, cornered kindly"],["Lecture Hall","the echo of insight"],["Seminar Room","the argument, productive"],["Lab Access","the goggles, on"],["Field Trip","the bus, formative"],["Internship","the coffee, educational"],["Apprenticeship","the trade, transferred by proximity"],["Journeyman Papers","the wandering years, certified"],["Master Class","the virtuoso, observed"],["Doctorate","the footnote, eternal"],["Postdoc","the parenthesis, extended"],["Tenure","the opinion, permanent"],["Endowed Chair","the chair, literally golden"],["Visiting Scholar","the accent, leverage"],["Guest Lecture","the fee, honorarium"],["Keynote Slot","the stage, early morning"],["Panel Seat","the microphone, shared"],["Committee Seat","the paperwork, historic"],["Dean's List","the parents, notified"],["Valedictorian","the speech, memorized"],["Rhodes House","the scholarship, legendary"],["Fulbright Year","the ocean, crossed for study"],["MacArthur Call","the genius, unrecognized no longer"],["Nobel Season","the Stockholm phone call"],["Fields Medal","the mathematics, aged under forty"],["Abel Prize","the lifetime, honored"],["Turing Award","the computation, canonical"],["Breaker Prize","the ore science, laureled"],["Honorary Doctorate","the robe, unearned but worn"],["Emeritus Status","the office, retained forever"],["Perpet Fellow","the stipend, generational"],["The Eternal Student","enrolled since the first seam"]]}]};
+const MILESTONES=[], FAMILIES=[], UPGRADES=[];
+(function(){
+  const mc={m1:500,m2:5e4,m3:2e5,m4:2e6,m5:5e8,m6:1e10,m7:1e30,m8:1e80,m13:1e4,
+            E400:BN.fromLog10(400),
+            TETR4:BN.tetr(4),TETR12:BN.tetr(12),TETR35:BN.tetr(35)};   // keyed by cost token
+  RES_RAW.milestones.forEach(u=>{
+    MILESTONES.push(Object.assign({},u,{cost: BN.of(typeof u.cost==='string'? (mc[u.cost]||1) : u.cost)}));
+  });
+  RES_RAW.families.forEach((f,fi)=>{
+    f.nodes.forEach((nd,ni)=>{
+      UPGRADES.push({
+        id:'r'+fi+'n'+String(ni).padStart(2,'0'),
+        fam:f.id, famName:f.name, famIdx:fi,
+        name:nd[0], desc:nd[1], blurb:f.blurb,
+        cost:BN.fromLog10(Math.log10(f.start)+ni*Math.log10(f.growth)),
+        eff:f.eff,
+        req: ni===0? null : ['r'+fi+'n'+String(ni-1).padStart(2,'0')],
+      });
+    });
+  });
+  MILESTONES.forEach(u=>UPGRADES.push(Object.assign({},u,{req:null})));
+})();
+function reqOk(u){ return !u.req || u.req.every(r=>S.up.has(r)); }
+let resCache={clickMul:1,allMul:1,cpsPct:0,frenzyAdd:0,goldMul:1,offCap:0,machDisc:1,resDisc:1,goldenLinger:0};
+function rebuildResCache(){
+  const c={clickMul:1,allMul:1,cpsPct:0,frenzyAdd:0,goldMul:1,offCap:0,machDisc:1,resDisc:1,goldenLinger:0};
+  for(const u of UPGRADES){
+    if(!S.up.has(u.id)||!u.eff) continue;
+    const e=u.eff;
+    switch(e.k){
+      case 'clickMul': c.clickMul*=e.v; break;
+      case 'allMul': c.allMul*=e.v; break;
+      case 'cpsPct': if(u.fam){c.cpsPct+=e.v;} break;
+      case 'frenzyAdd': c.frenzyAdd+=e.v; break;
+      case 'goldMul': c.goldMul*=e.v; break;
+      case 'offCap': c.offCap+=e.v; break;
+      case 'machDisc': c.machDisc*=e.v; break;
+      case 'resDisc': c.resDisc*=e.v; break;
+      case 'goldenLinger': c.goldenLinger=4; break;
+    }
+  }
+  resCache=c;
+}
+function applyResearch(u){
+  const e=u.eff;
+  if(e.k==='clickPow'){ S.clickBase=S.clickBase.pow(e.v); }
+  else if(e.k==='allPow'){ S.mult=S.mult.pow(e.v); }
+  else if(e.k==='allTetr'){ S.tetrN+=e.v; }        // tower research stacks layers
+  else if(e.k==='cpsPct'&&!u.fam){ S.clickCpsPct+=e.v; }
+  rebuildResCache();
+}
+
+/* ============ PRESTIGE ============ */
+const PR_REQ=1e12;
+function canCollapse(){ return S.total.gte(PR_REQ); }
+function coresOnCollapse(){
+  // insane levels: tetration-scale lifetime ore pours out cores exponentially —
+  // layer 2 -> 10^4, layer 5 -> 10^10, layer 50 -> 10^100, capped at 10^300
+  if(S.total.L>=2) return Math.min(1e300, Math.floor(Math.pow(10, Math.min(2*S.total.L,300))));
+  return Math.max(1, Math.floor(S.total.log10i()-11));
+}
+function collapse(){
+  if(!canCollapse()) return;
+  const g=coresOnCollapse();
+  S.cores+=g; S.collapses++;
+  S.ores=num(0); S.b={}; S.up=new Set(); S.mult=num(1); S.tetrN=0;
+  S.clickBase=num(1); S.clickCpsPct=0; S.frenzyUntil=0;
+  despawnGolden();
+  dirtyCPS(); rebuildResCache();
+  S.seed=(Math.random()*2147483647)|0;   // new seam — new world
+  rebuildWorld();
+  curTier=0; buildTierStrip(); buildMachineryPage();
+  toast('MINE COLLAPSED — +'+g.toLocaleString()+' cores · NEW SEAM FOUND','gold');
+  save(); refreshUI();
+}
+
+/* ============ ACHIEVEMENTS — 121, hand-written ============ */
+const ACH_RAW=[
+{id:'a1', name:"Rookie Numbers", desc:"dig your very first ore", ck:"S.total.gte(1)"},
+{id:'a2', name:"Walking Money", desc:"1e3 lifetime ores", ck:"S.total.gte(1e3)"},
+{id:'a3', name:"Pocket Change", desc:"1e4 lifetime ores", ck:"S.total.gte(1e4)"},
+{id:'a4', name:"Serious Hobby", desc:"1e5 lifetime ores", ck:"S.total.gte(1e5)"},
+{id:'a5', name:"Millionaire Hill", desc:"1e6 lifetime ores", ck:"S.total.gte(1e6)"},
+{id:'a6', name:"Seven Zeroes", desc:"1e7 lifetime ores", ck:"S.total.gte(1e7)"},
+{id:'a7', name:"Billionaire Hill", desc:"1e8 lifetime ores", ck:"S.total.gte(1e8)"},
+{id:'a8', name:"Van Load", desc:"1e9 lifetime ores", ck:"S.total.gte(1e9)"},
+{id:'a9', name:"Train Load", desc:"1e10 lifetime ores", ck:"S.total.gte(1e10)"},
+{id:'a10',name:"National Economy", desc:"1e12 lifetime ores", ck:"S.total.gte(1e12)"},
+{id:'a11',name:"Line Item", desc:"1e15 lifetime ores", ck:"S.total.gte(1e15)"},
+{id:'a12',name:"GDP Of Nowhere", desc:"1e18 lifetime ores", ck:"S.total.gte(1e18)"},
+{id:'a13',name:"Too Many Zeros", desc:"1e21 lifetime ores", ck:"S.total.gte(1e21)"},
+{id:'a14',name:"Astronomical", desc:"1e25 lifetime ores", ck:"S.total.gte(1e25)"},
+{id:'a15',name:"Atomic Count", desc:"1e30 lifetime ores", ck:"S.total.gte(1e30)"},
+{id:'a16',name:"Googol Prospect", desc:"1e50 lifetime ores", ck:"S.total.gte(1e50)"},
+{id:'a17',name:"Googol Miner", desc:"1e100 lifetime ores", ck:"S.total.gte(1e100)"},
+{id:'a18',name:"Googolplex Adjacent", desc:"1e150 lifetime ores", ck:"S.total.gte(1e150)"},
+{id:'a19',name:"Beyond Double Precision", desc:"1e308 lifetime ores", ck:"S.total.gte(1e308)"},
+{id:'a20',name:"E-Nation", desc:"1e500 lifetime ores", ck:"S.total.gte(1e500)"},
+{id:'a21',name:"Tower Of Digits", desc:"1e1000 lifetime ores", ck:"S.total.gte(1e1000)"},
+{id:'a22',name:"Tetrated", desc:"10^^3 lifetime ores", ck:"S.total.gte(BN.tetr(3))"},
+{id:'a23',name:"Tower Baron", desc:"10^^5 lifetime ores", ck:"S.total.gte(BN.tetr(5))"},
+{id:'a24',name:"The Ledger Breaks", desc:"10^^10 lifetime ores", ck:"S.total.gte(BN.tetr(10))"},
+{id:'a25',name:"Numbers Stop Meaning Things", desc:"10^^15 lifetime ores", ck:"S.total.gte(BN.tetr(15))"},
+{id:'a26',name:"First Tap", desc:"click once", ck:"S.clicks>=1"},
+{id:'a27',name:"Warm Hands", desc:"100 clicks", ck:"S.clicks>=100"},
+{id:'a28',name:"Clicky", desc:"1,000 clicks", ck:"S.clicks>=1000"},
+{id:'a29',name:"Carpal Tunnel Candidate", desc:"5,000 clicks", ck:"S.clicks>=5000"},
+{id:'a30',name:"Mouse Funeral", desc:"25,000 clicks", ck:"S.clicks>=25000"},
+{id:'a31',name:"The Click That Broke The Mouse", desc:"100,000 clicks", ck:"S.clicks>=100000"},
+{id:'a32',name:"Hand Tool Era", desc:"own 10 machinery units", ck:"bTotal()>=10"},
+{id:'a33',name:"Small Fleet", desc:"own 50 machinery units", ck:"bTotal()>=50"},
+{id:'a34',name:"Automation", desc:"own 100 machinery units", ck:"bTotal()>=100"},
+{id:'a35',name:"Industrialist", desc:"own 250 machinery units", ck:"bTotal()>=250"},
+{id:'a36',name:"Company Town", desc:"own 500 machinery units", ck:"bTotal()>=500"},
+{id:'a37',name:"Mega-Project", desc:"own 1,000 machinery units", ck:"bTotal()>=1000"},
+{id:'a38',name:"Full Employment", desc:"own 5,000 machinery units", ck:"bTotal()>=5000"},
+{id:'a39',name:"Collector", desc:"own 25 different machines", ck:"bKinds()>=25"},
+{id:'a40',name:"Cataloguer", desc:"own 100 different machines", ck:"bKinds()>=100"},
+{id:'a41',name:"Curator", desc:"own 400 different machines", ck:"bKinds()>=400"},
+{id:'a42',name:"Museum Of Industry", desc:"own 1,000 different machines", ck:"bKinds()>=1000"},
+{id:'a43',name:"The Full Catalog", desc:"own every machine in the game", ck:"bKinds()>=1792"},
+{id:'a44',name:"Scrap Baron", desc:"reach stratum 1", ck:"tierReached(1)"},
+{id:'a45',name:"Workshop Rat", desc:"reach stratum 2", ck:"tierReached(2)"},
+{id:'a46',name:"Pit Boss", desc:"reach stratum 3", ck:"tierReached(3)"},
+{id:'a47',name:"Company Man", desc:"reach stratum 4", ck:"tierReached(4)"},
+{id:'a48',name:"Shaft Sinker", desc:"reach stratum 5", ck:"tierReached(5)"},
+{id:'a49',name:"Wet Chemist", desc:"reach stratum 6", ck:"tierReached(6)"},
+{id:'a50',name:"Spark Chaser", desc:"reach stratum 7", ck:"tierReached(7)"},
+{id:'a51',name:"Bench Blaster", desc:"reach stratum 8", ck:"tierReached(8)"},
+{id:'a52',name:"Under Pressure", desc:"reach stratum 9", ck:"tierReached(9)"},
+{id:'a53',name:"Fleet Admiral", desc:"reach stratum 10", ck:"tierReached(10)"},
+{id:'a54',name:"Molecular Chef", desc:"reach stratum 11", ck:"tierReached(11)"},
+{id:'a55',name:"Orbital Foreman", desc:"reach stratum 12", ck:"tierReached(12)"},
+{id:'a56',name:"Crustal Engineer", desc:"reach stratum 13", ck:"tierReached(13)"},
+{id:'a57',name:"Mantle Man", desc:"reach stratum 14", ck:"tierReached(14)"},
+{id:'a58',name:"Core Keeper", desc:"reach stratum 15", ck:"tierReached(15)"},
+{id:'a59',name:"Planet Stripper", desc:"reach stratum 16", ck:"tierReached(16)"},
+{id:'a60',name:"Star Syndic", desc:"reach stratum 17", ck:"tierReached(17)"},
+{id:'a61',name:"Degenerate", desc:"reach stratum 18 — the geologists are worried", ck:"tierReached(18)"},
+{id:'a62',name:"Horizon Adjacent", desc:"reach stratum 19", ck:"tierReached(19)"},
+{id:'a63',name:"Spacetime Quarryman", desc:"reach stratum 20", ck:"tierReached(20)"},
+{id:'a64',name:"Brane Surgeon", desc:"reach stratum 21", ck:"tierReached(21)"},
+{id:'a65',name:"Axiomatic", desc:"reach stratum 22", ck:"tierReached(22)"},
+{id:'a66',name:"Ordinal Industrialist", desc:"reach stratum 23", ck:"tierReached(23)"},
+{id:'a67',name:"Tower Mason", desc:"reach stratum 24", ck:"tierReached(24)"},
+{id:'a68',name:"Large Cardinal", desc:"reach stratum 25", ck:"tierReached(25)"},
+{id:'a69',name:"Proof Industrialist", desc:"reach stratum 26", ck:"tierReached(26)"},
+{id:'a70',name:"Void Harvester", desc:"reach stratum 27", ck:"tierReached(27)"},
+{id:'a71',name:"The Absolute", desc:"reach stratum 28 — there is nothing below", ck:"tierReached(28)"},
+{id:'a72',name:"Curious Mind", desc:"buy 1 research", ck:"S.up.size>=1"},
+{id:'a73',name:"Bookworm", desc:"buy 5 research", ck:"S.up.size>=5"},
+{id:'a74',name:"The Milestones", desc:"buy all 13 milestone research", ck:"MILESTONES.every(u=>S.up.has(u.id))"},
+{id:'a75',name:"Researcher", desc:"buy 25 research", ck:"S.up.size>=25"},
+{id:'a76',name:"Grant Funded", desc:"buy 50 research", ck:"S.up.size>=50"},
+{id:'a77',name:"Department Head", desc:"buy 100 research", ck:"S.up.size>=100"},
+{id:'a78',name:"Institute", desc:"buy 200 research", ck:"S.up.size>=200"},
+{id:'a79',name:"Library Of Alexandria", desc:"buy 300 research", ck:"S.up.size>=300"},
+{id:'a80',name:"Know Everything", desc:"buy all 433 research", ck:"S.up.size>=433"},
+{id:'a81',name:"Ground Zero", desc:"collapse the mine once", ck:"S.collapses>=1"},
+{id:'a82',name:"Repeat Offender", desc:"collapse 2 times", ck:"S.collapses>=2"},
+{id:'a83',name:"Serial Collapser", desc:"collapse 3 times", ck:"S.collapses>=3"},
+{id:'a84',name:"Seismologist's Nightmare", desc:"collapse 5 times", ck:"S.collapses>=5"},
+{id:'a85',name:"Groundhog Seam", desc:"collapse 10 times", ck:"S.collapses>=10"},
+{id:'a86',name:"Tectonic Habit", desc:"collapse 25 times", ck:"S.collapses>=25"},
+{id:'a87',name:"Mountain Eater", desc:"collapse 50 times", ck:"S.collapses>=50"},
+{id:'a88',name:"The Ground Forgot", desc:"collapse 100 times", ck:"S.collapses>=100"},
+{id:'a89',name:"Pocket Cores", desc:"hold 1 core", ck:"S.cores>=1"},
+{id:'a90',name:"Core Collector", desc:"hold 10 cores", ck:"S.cores>=10"},
+{id:'a91',name:"Core Hoarder", desc:"hold 50 cores", ck:"S.cores>=50"},
+{id:'a92',name:"Transcendent", desc:"hold 400 cores", ck:"S.cores>=400"},
+{id:'a93',name:"Core Baron", desc:"hold 1,000 cores", ck:"S.cores>=1000"},
+{id:'a94',name:"Core Magnate", desc:"hold 5,000 cores", ck:"S.cores>=5000"},
+{id:'a95',name:"Core Sovereign", desc:"hold 25,000 cores", ck:"S.cores>=25000"},
+{id:'a96',name:"The Center Holds", desc:"hold 100,000 cores", ck:"S.cores>=100000"},
+{id:'a97',name:"Below Every Floor", desc:"hold 1,000,000 cores", ck:"S.cores>=1000000"},
+{id:'a98',name:"Golden Touch", desc:"catch a golden voxel", ck:"S.goldenClicks>=1"},
+{id:'a99',name:"Gold Rush", desc:"catch 10 golden voxels", ck:"S.goldenClicks>=10"},
+{id:'a100',name:"Prospector's Eye", desc:"catch 50 golden voxels", ck:"S.goldenClicks>=50"},
+{id:'a101',name:"Midas Shift", desc:"catch 100 golden voxels", ck:"S.goldenClicks>=100"},
+{id:'a102',name:"Gilded", desc:"catch 500 golden voxels", ck:"S.goldenClicks>=500"},
+{id:'a103',name:"First Frenzy", desc:"trigger a frenzy", ck:"S.frenzies>=1"},
+{id:'a104',name:"Frenzy Habit", desc:"trigger 10 frenzies", ck:"S.frenzies>=10"},
+{id:'a105',name:"Frenzy Dependent", desc:"trigger 50 frenzies", ck:"S.frenzies>=50"},
+{id:'a106',name:"Scientific Notation", desc:"reach layer 1", ck:"S.ores.L>=1"},
+{id:'a107',name:"Tetration Scale", desc:"reach layer 2", ck:"S.ores.L>=2"},
+{id:'a108',name:"Tower District", desc:"reach layer 5", ck:"S.ores.L>=5"},
+{id:'a109',name:"Layer Cake", desc:"reach layer 20", ck:"S.ores.L>=20"},
+{id:'a110',name:"Salary In Kind", desc:"auto rate hits 1e6/s", ck:"gainAuto().log10i()>=6"},
+{id:'a111',name:"Economy Of Scale", desc:"auto rate hits 1e100/s", ck:"gainAuto().log10i()>=100"},
+{id:'a112',name:"Runaway Train", desc:"auto rate goes tetration", ck:"gainAuto().L>=2"},
+{id:'a113',name:"Lucky Strike", desc:"hit a golden payout", ck:"S.luckies>=1"},
+{id:'a114',name:"Boomerang", desc:"come back after a reload", ck:"S.reloads>=1"},
+{id:'a115',name:"Night Shift", desc:"collect offline earnings", ck:"S.offCollected>=1"},
+{id:'a116',name:"Bulk Buyer", desc:"shift-click to buy 10 at once", ck:"S.shiftBuys>=1"},
+{id:'a117',name:"Pallet Order", desc:"own 100 of a single machine", ck:"maxMachine()>=100"},
+{id:'a118',name:"Addicted To A Machine", desc:"own 500 of a single machine", ck:"maxMachine()>=500"},
+{id:'a119',name:"Monoculture", desc:"own 2,000 of a single machine", ck:"maxMachine()>=2000"},
+{id:'a120',name:"Perfect Stratum", desc:"buy all 64 machines of stratum 1", ck:"tierKinds(1)>=64"},
+{id:'a121',name:"The Absolute Owner", desc:"buy all 64 machines of stratum 28", ck:"tierKinds(28)>=64"}
+]
+;
+const ACHS=ACH_RAW.map(a=>Object.assign({},a,{ck:new Function('return ('+a.ck+')')}));
+function checkAchs(){
+  for(const a of ACHS){
+    if(!S.ach.has(a.id) && a.ck()){ S.ach.add(a.id); toast('UNLOCKED — '+a.name); }
+  }
+}
+
+/* ============ SAVE / LOAD (localStorage + IndexedDB mirror + file) ============ */
+const SAVE_KEY='strataSave_v7';   // v7 = tower-economy reset; all older saves discarded
+function rvBN(x){ const b=new BN(0); if(x&&typeof x==='object'){b.s=x.s||0;b.m=x.m||0;b.E=x.E||0;b.L=x.L||0;b.norm();} return b; }
+function save(){
+  try{
+    const json=JSON.stringify({
+      v:7, t:Date.now(),
+      ores:S.ores, total:S.total, clickBase:S.clickBase, mult:S.mult,
+      clicks:S.clicks, goldenClicks:S.goldenClicks, clickCpsPct:S.clickCpsPct,
+      frenzies:S.frenzies, luckies:S.luckies, reloads:S.reloads,
+      offCollected:S.offCollected, shiftBuys:S.shiftBuys,
+      cores:S.cores, collapses:S.collapses, tetrN:S.tetrN, autobuy:S.autobuy, seed:S.seed,
+      b:S.b, up:[...S.up], ach:[...S.ach],
+    });
+    try{ localStorage.setItem(SAVE_KEY,json); }catch(e){ /* quota — mirror still below */ }
+    idbSet(SAVE_KEY,json).catch(()=>{});
+  }catch(e){}
+}
+function applySaveData(d){
+  if(d.v!==7) return;   // pre-tower-rebalance saves are wiped — fresh start
+  S.ores=rvBN(d.ores); S.total=rvBN(d.total);
+  S.clickBase=rvBN(d.clickBase); S.mult=rvBN(d.mult);
+  S.clicks=d.clicks||0; S.goldenClicks=d.goldenClicks||0; S.clickCpsPct=d.clickCpsPct||0;
+  S.frenzies=d.frenzies||0; S.luckies=d.luckies||0; S.reloads=(d.reloads||0)+1;
+  S.offCollected=d.offCollected||0; S.shiftBuys=d.shiftBuys||0;
+  S.cores=d.cores||0; S.collapses=d.collapses||0; S.tetrN=d.tetrN||0; S.autobuy=d.autobuy!==false;
+  S.seed=d.seed||0;
+  S.b=d.b||{}; S.up=new Set(d.up||[]); S.ach=new Set(d.ach||[]);
+  dirtyCPS(); rebuildResCache();
+  const cap=Math.max(hasPerk('p2')?24*3600:2*3600, resCache.offCap);
+  const el=Math.min((Date.now()-d.t)/1000, cap);
+  if(el>10){
+    const g=gainAuto().mul(el);
+    if(g.gt(0)){ S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.offCollected++;
+      toast('AWAY '+Math.floor(el/60)+' MIN — +'+g.fmt()+' ores'); }
+  }
+}
+function load(){
+  let d=null;
+  try{ d=JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){}
+  if(d&&d.v===7){ applySaveData(d); return; }
+  // stale pre-v7 data under any key is discarded — full reset
+  try{ localStorage.removeItem('strataSave_v6'); localStorage.removeItem('voxelAscend_v3'); }catch(e){}
+  ['strataSave_v6','voxelAscend_v3'].forEach(k=>{
+    idbGet(k).then(v=>{ if(v) idbSet(k,'').catch(()=>{}); }).catch(()=>{});
+  });
+}
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    const r=indexedDB.open('strata',1);
+    r.onupgradeneeded=()=>{ r.result.createObjectStore('saves'); };
+    r.onsuccess=()=>res(r.result);
+    r.onerror=()=>rej(r.error);
+  });
+}
+async function idbSet(k,v){
+  const db=await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('saves','readwrite');
+    tx.objectStore('saves').put(v,k);
+    tx.oncomplete=res; tx.onerror=()=>rej(tx.error);
+  });
+}
+async function idbGet(k){
+  const db=await idbOpen();
+  return new Promise((res,rej)=>{
+    const tx=db.transaction('saves','readonly');
+    const rq=tx.objectStore('saves').get(k);
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error);
+  });
+}
+
+/* ============ TOASTS & POPUPS ============ */
+const toastWrap=document.getElementById('toasts');
+function toast(txt,cls){
+  const el=document.createElement('div');
+  el.className='toast '+(cls||'');
+  el.textContent=txt;
+  toastWrap.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),400); }, 3800);
+}
+function spawnPopup(txt,pos){
+  const el=document.createElement('div');
+  el.className='pop';
+  el.textContent='+'+txt;
+  el.style.left=(pos.x+(Math.random()*44-22))+'px';
+  el.style.top=pos.y+'px';
+  document.body.appendChild(el);
+  requestAnimationFrame(()=>{ el.style.transform='translateY(-90px)'; el.style.opacity='0'; });
+  setTimeout(()=>el.remove(),950);
+}
+
+/* ================= THREE.JS SCENE ================= */
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0x0e0c09);
+scene.fog=new THREE.Fog(0x0e0c09,24,78);
+const cam=new THREE.PerspectiveCamera(60,innerWidth/innerHeight,.1,300);
+cam.position.set(7,7,11);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   // perf: cap fill-rate cost
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputEncoding=THREE.sRGBEncoding;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.12;
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+document.body.appendChild(renderer.domElement);
+const controls=new THREE.OrbitControls(cam,renderer.domElement);
+controls.enableDamping=true;
+controls.maxDistance=48;
+controls.minDistance=4;
+controls.target.set(0,1,0);
+controls.maxPolarAngle=Math.PI*0.495;   // never orbit below the horizon of the pit
+controls.minPolarAngle=0.04;
+
+scene.add(new THREE.HemisphereLight(0xcbb896,0x181208,0.5));
+const dir=new THREE.DirectionalLight(0xffe8c4,1.05);
+dir.position.set(8,15,6);
+dir.castShadow=true;
+dir.shadow.mapSize.set(1024,1024);
+dir.shadow.camera.left=-16; dir.shadow.camera.right=16;
+dir.shadow.camera.top=16; dir.shadow.camera.bottom=-16;
+scene.add(dir);
+
+/* ============ SEEDED WORLD GENERATION (seed stays hidden) ============ */
+const FLOOR_Y=-3.6;
+const dummy=new THREE.Object3D();
+const boxGeo=new THREE.BoxGeometry(1,1,1);
+function mulberry32(a){
+  return function(){
+    a|=0; a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function makeNoise(seed){
+  function h(ix,iz){
+    let n=Math.imul(ix,374761393)+Math.imul(iz,668265263)+Math.imul(seed,1442695041);
+    n=Math.imul(n^(n>>>13),1274126177); n^=n>>>16;
+    return (n>>>0)/4294967296;
+  }
+  return function(x,z){
+    const ix=Math.floor(x), iz=Math.floor(z), fx=x-ix, fz=z-iz;
+    const u=fx*fx*(3-2*fx), v=fz*fz*(3-2*fz);
+    const a=h(ix,iz), b=h(ix+1,iz), c=h(ix,iz+1), d=h(ix+1,iz+1);
+    return a*(1-u)*(1-v)+b*u*(1-v)+c*(1-u)*v+d*u*v;
+  };
+}
+function chunkGeo(rng){ // rugged voxel boulder — welded vertex displacement
+  const g=new THREE.BoxGeometry(2,2,2);
+  const pos=g.attributes.position, map={};
+  for(let i=0;i<pos.count;i++){
+    const k=pos.getX(i).toFixed(2)+','+pos.getY(i).toFixed(2)+','+pos.getZ(i).toFixed(2);
+    if(!(k in map)) map[k]=[(rng()-.5)*.55,(rng()-.5)*.55,(rng()-.5)*.55];
+    pos.setXYZ(i, pos.getX(i)+map[k][0], pos.getY(i)+map[k][1], pos.getZ(i)+map[k][2]);
+  }
+  g.computeVertexNormals();
+  return g;
+}
+const PALETTES=[
+  {a:0x241e15,b:0x2b2418,core:0xd99a3d,acc:0xf0e6d2},
+  {a:0x1a2028,b:0x202833,core:0x7fb8d8,acc:0xd8e8f0},
+  {a:0x2a1614,b:0x331c18,core:0xd96a3d,acc:0xf0d8c8},
+  {a:0x1a2317,b:0x202b1c,core:0x9ad97a,acc:0xe8f0d8},
+  {a:0x14161a,b:0x1a1d22,core:0xc0c8d4,acc:0xaab4c4},
+  {a:0x231a26,b:0x2b2030,core:0xc98ad9,acc:0xead8f0},
+];
+const CORE_SHAPES=['box','octa','icosa','dodeca','chunk'];
+const glowTexture=(()=>{
+  const c=document.createElement('canvas'); c.width=c.height=128;
+  const x=c.getContext('2d');
+  const g=x.createRadialGradient(64,64,0,64,64,64);
+  g.addColorStop(0,'rgba(255,255,255,.9)');
+  g.addColorStop(.4,'rgba(255,255,255,.25)');
+  g.addColorStop(1,'rgba(255,255,255,0)');
+  x.fillStyle=g; x.fillRect(0,0,128,128);
+  return new THREE.CanvasTexture(c);
+})();
+
+/* W holds every seeded/decorative object so a collapse can rebuild it all */
+const W={group:null,hyper:null,ring:null,beam:null,beamMat:null,glow:null,
+         rings:[],dust:null,dpar:[],shardsIM:null,shardP:[],
+         core:null,coreMat:null,aura:null,auraMat:null,
+         palette:null,shape:null,topAt:null,cCol:null,cColF:null};
+
+let CV={emissive:.6,auraOp:.2,shards:8,spin:.5,scale:1,ring:false,beam:false,hyper:false};
+function recomputeCoreVisuals(){          // research → core appearance
+  const n=S.up.size;
+  const tetr=S.up.has('m9')||S.up.has('m10')||S.up.has('m11')||S.up.has('m12');
+  CV={
+    emissive:.5+Math.min(n,80)*.012,
+    auraOp:.16+Math.min(n,80)*.008,
+    shards:Math.min(24,8+Math.floor(n/8)),
+    spin:.45+Math.min(n,80)*.01,
+    scale:1+Math.min(n,80)*.004,
+    ring:S.up.has('m7')||S.up.has('m8')||tetr,
+    beam:tetr,
+    hyper:S.up.has('m12'),
+  };
+  if(W.hyper){
+    W.hyper.visible=CV.hyper; W.ring.visible=CV.ring; W.beam.visible=CV.beam;
+  }
+}
+
+function buildWorld(seed){
+  const rng=mulberry32(seed);
+  const pal=PALETTES[Math.floor(rng()*PALETTES.length)];
+  const shape=CORE_SHAPES[Math.floor(rng()*CORE_SHAPES.length)];
+  // wave personality — color, reach, speed and width all seeded per mine
+  const ringCol=new THREE.Color().setHSL(rng(), .78, .62);
+  const ringMaxR=7.5+rng()*4.5;
+  const ringSpd=.24+rng()*.16;
+  const ringW=.3+rng()*.35;
+  const noise=makeNoise(seed^0x9e3779b9);
+  function hAt(x,z){
+    let n=noise(x*.16,z*.16)*.65+noise(x*.33+40,z*.33+40)*.35;
+    let h=Math.floor(n*5)/3.2-.45;                    // terraced voxel steps
+    const r=Math.hypot(x,z);
+    h-=Math.max(0,3.4-r)*.5;                          // central crater bowl
+    if(r>7.2) h+=(r-7.2)*.32;                         // rising rim
+    if(noise(x*.9+7,z*.9+7)>.83) h+=.6+noise(x*2.3+11,z*2.3-5)*1.9;   // spires: randomized heights
+    return h;
+  }
+  const topAt=(x,z)=>{                      // single source of truth — matches rendered floor everywhere
+    const r=Math.hypot(x,z);
+    if(r<=8) return FLOOR_Y+hAt(x,z);
+    const k=8/r;
+    return FLOOR_Y+hAt(x*k,z*k)*(1-Math.min(1,(r-8)/9)*.8)+(r-8)*.012;
+  };
+
+  const g=new THREE.Group();
+  const tmp=new THREE.Color();
+  const bg=new THREE.Color(0x0e0c09);
+
+  /* --- floor: detailed core (-8..8) dissolving into a void plain (r<=24) ---
+         one InstancedMesh, one draw call; tiles fade to the void color with
+         distance so the mine appears to extend into infinity --- */
+  const tiles=[];
+  for(let x=-24;x<=24;x++)for(let z=-24;z<=24;z++){
+    const r=Math.hypot(x,z);
+    if(r<=24) tiles.push([x,z,r]);
+  }
+  const fIM=new THREE.InstancedMesh(boxGeo,
+    new THREE.MeshLambertMaterial({color:0xffffff}),tiles.length);
+  fIM.receiveShadow=true; fIM.frustumCulled=false; fIM.userData.sharedG=true;
+  const cA=new THREE.Color(pal.a), cB=new THREE.Color(pal.b);
+  const BASE=FLOOR_Y-3.2;
+  tiles.forEach(([x,z,r],i)=>{
+    const top=topAt(x,z);
+    const H=Math.max(.18,top-BASE);
+    dummy.position.set(x,(top+BASE)/2,z);
+    dummy.scale.set(1,H,1); dummy.rotation.set(0,0,0);
+    dummy.updateMatrix();
+    fIM.setMatrixAt(i,dummy.matrix);
+    const fade=Math.min(1,Math.max(0,(r-7.5)/13));
+    tmp.copy((x+z)&1?cA:cB).multiplyScalar(.85+rng()*.3)
+       .lerp(bg,fade*.94);
+    fIM.setColorAt(i,tmp);
+  });
+  g.add(fIM);
+
+  /* --- ore flecks embedded in the floor --- */
+  const fk=new THREE.InstancedMesh(new THREE.BoxGeometry(.24,.11,.24),
+    new THREE.MeshBasicMaterial({color:0xffffff}),42);
+  fk.frustumCulled=false;
+  for(let i=0;i<42;i++){
+    const x=(rng()*2-1)*7.5, z=(rng()*2-1)*7.5;
+    dummy.position.set(x,topAt(x,z)+.06,z);
+    dummy.rotation.set(0,rng()*3,0); dummy.scale.setScalar(.6+rng());
+    dummy.updateMatrix(); fk.setMatrixAt(i,dummy.matrix);
+    tmp.setHex(rng()<.5?pal.core:pal.acc).multiplyScalar(.65+rng()*.5);
+    fk.setColorAt(i,tmp);
+  }
+  g.add(fk);
+
+  /* --- crystals --- */
+  const cr=new THREE.InstancedMesh(new THREE.OctahedronGeometry(.16),
+    new THREE.MeshBasicMaterial({color:0xffffff}),14);
+  cr.frustumCulled=false;
+  for(let i=0;i<14;i++){
+    const a=rng()*Math.PI*2, r=2.6+rng()*4.6;
+    const x=Math.cos(a)*r, z=Math.sin(a)*r;
+    dummy.position.set(x,topAt(x,z)+.16,z);
+    dummy.rotation.set(rng()*3,rng()*3,0);
+    dummy.scale.set(1,.8+rng()*2.2,1);
+    dummy.updateMatrix(); cr.setMatrixAt(i,dummy.matrix);
+    tmp.setHex(rng()<.5?pal.core:pal.acc).multiplyScalar(.7+rng()*.4);
+    cr.setColorAt(i,tmp);
+  }
+  g.add(cr);
+
+  /* --- the core voxel (seeded shape + palette color) --- */
+  let cgeo;
+  if(shape==='box') cgeo=new THREE.BoxGeometry(2,2,2);
+  else if(shape==='octa') cgeo=new THREE.OctahedronGeometry(1.5);
+  else if(shape==='icosa') cgeo=new THREE.IcosahedronGeometry(1.4);
+  else if(shape==='dodeca') cgeo=new THREE.DodecahedronGeometry(1.35);
+  else cgeo=chunkGeo(rng);
+  const coreMat=new THREE.MeshStandardMaterial({
+    color:pal.core,
+    emissive:new THREE.Color(pal.core).multiplyScalar(.4).getHex(),
+    emissiveIntensity:.75,metalness:.55,roughness:.35});
+  const core=new THREE.Mesh(cgeo,coreMat);
+  core.position.set(0,2,0); core.castShadow=true; g.add(core);
+
+  /* --- upgrade-driven decorations (hidden until research unlocks them) --- */
+  const hyper=new THREE.Mesh(new THREE.BoxGeometry(2.7,2.7,2.7),
+    new THREE.MeshBasicMaterial({color:pal.acc,wireframe:true,transparent:true,opacity:.32}));
+  hyper.position.copy(core.position); hyper.visible=false; g.add(hyper);
+
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(2.5,.05,8,48),
+    new THREE.MeshBasicMaterial({color:pal.core,transparent:true,opacity:.5}));
+  ring.position.copy(core.position); ring.visible=false; g.add(ring);
+
+  const beamMat=new THREE.MeshBasicMaterial({color:pal.core,transparent:true,opacity:.08,
+    blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+  const beam=new THREE.Mesh(new THREE.CylinderGeometry(.45,.95,15,10,1,true),beamMat);
+  beam.position.set(0,9.5,0); beam.visible=false; g.add(beam);
+
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:pal.core,
+    transparent:true,opacity:.26,blending:THREE.AdditiveBlending,depthWrite:false}));
+  glow.scale.setScalar(11); glow.position.set(0,2,0); g.add(glow);
+
+  // core point light — the seam itself illuminates the crater
+  const plight=new THREE.PointLight(pal.core,.85,22,2);
+  plight.position.set(0,2.2,0); g.add(plight);
+
+  /* --- pulse rings: terrain-conforming LineLoops that ride the voxel floor --- */
+  const RSEG=96;
+  const mkRing=()=>{
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(RSEG*3),3));
+    geo.setAttribute('color',new THREE.BufferAttribute(new Float32Array(RSEG*3),3));
+    const m=new THREE.LineLoop(geo,new THREE.MeshBasicMaterial({vertexColors:true,
+      transparent:true,opacity:.3,blending:THREE.AdditiveBlending,depthWrite:false}));
+    m.frustumCulled=false;
+    g.add(m); return m;
+  };
+  const rings=[0,1].map(i=>{
+    const m=mkRing();
+    m.userData.ph=i*.5;
+    return m;
+  });
+
+  /* --- dust motes --- */
+  const DN=260, dpos=new Float32Array(DN*3), dpar=[];
+  for(let i=0;i<DN;i++){
+    dpar.push({r:2.5+rng()*8,a:rng()*Math.PI*2,y:FLOOR_Y+rng()*8,
+               ph:rng()*6.28,spd:.15+rng()*.35,rs:(rng()<.5?-1:1)*(.02+rng()*.05)});
+  }
+  const dgeo=new THREE.BufferGeometry();
+  dgeo.setAttribute('position',new THREE.BufferAttribute(dpos,3));
+  const dust=new THREE.Points(dgeo,new THREE.PointsMaterial({color:pal.acc,size:.14,
+    transparent:true,opacity:.45,blending:THREE.AdditiveBlending,depthWrite:false}));
+  dust.frustumCulled=false; g.add(dust);
+
+  /* --- orbiting shards (instanced, count scales with research) --- */
+  const SN=24;
+  const shardsIM=new THREE.InstancedMesh(new THREE.BoxGeometry(.26,.26,.26),
+    new THREE.MeshStandardMaterial({color:pal.core,emissive:
+      new THREE.Color(pal.core).multiplyScalar(.3).getHex(),metalness:.5,roughness:.4}),SN);
+  shardsIM.castShadow=true; shardsIM.frustumCulled=false;
+  shardsIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const shardP=[];
+  for(let i=0;i<SN;i++){
+    shardP.push({off:i/SN*6.28,r:3+rng()*1.2,spd:.6+rng()*.5,
+                 ph:rng()*6.28,amp:.8+rng()*.8,sz:.7+rng()*.7});
+  }
+  g.add(shardsIM);
+
+  /* --- seeded starfield --- */
+  {
+    const pos=[];
+    for(let i=0;i<600;i++){
+      const r=80+rng()*45, th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1);
+      pos.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph), r*Math.sin(ph)*Math.sin(th));
+    }
+    const sg=new THREE.BufferGeometry();
+    sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    const sm=new THREE.PointsMaterial({color:0xbcb2a0,size:.5,sizeAttenuation:true});
+    sm.fog=false;
+    g.add(new THREE.Points(sg,sm));
+  }
+
+  scene.add(g);
+  const cCol=new THREE.Color(pal.core);
+  const cColF=cCol.clone().lerp(new THREE.Color(0xffffff),.45);
+  Object.assign(W,{group:g,hyper,ring,beam,beamMat,glow,plight,rings,dust,dpar,
+    shardsIM,shardP,core,coreMat,palette:pal,shape,topAt,cCol,cColF,rseg:RSEG,
+    ringCol,ringMaxR,ringSpd,ringW,
+    colTop:(x,z)=>topAt(Math.round(x),Math.round(z))});   // exact rendered voxel height
+  recomputeCoreVisuals();
+}
+function rebuildWorld(){
+  if(W.group){
+    scene.remove(W.group);
+    W.group.traverse(o=>{
+      if(o.geometry && !o.userData.sharedG) o.geometry.dispose();
+      if(o.material){
+        const ms=Array.isArray(o.material)?o.material:[o.material];
+        ms.forEach(m=>{ if(m.map&&m.map!==glowTexture) m.map.dispose(); m.dispose(); });
+      }
+    });
+  }
+  buildWorld(S.seed);
+}
+
+/* --- static click hitbox (outside the seeded group) --- */
+const hitbox=new THREE.Mesh(new THREE.BoxGeometry(3.2,3.2,3.2),
+  new THREE.MeshBasicMaterial({visible:false}));
+hitbox.position.set(0,2,0);
+scene.add(hitbox);
+
+/* ============ PARTICLES (instanced — 1 draw call) ============ */
+const PMAX=70;
+const pIM=new THREE.InstancedMesh(new THREE.BoxGeometry(.12,.12,.12),
+  new THREE.MeshBasicMaterial({color:0xffffff}),PMAX);
+pIM.frustumCulled=false;
+pIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(pIM);
+const parts=Array.from({length:PMAX},()=>({p:new THREE.Vector3(),v:new THREE.Vector3(),t:0,alive:false,s:1}));
+{
+  const c0=new THREE.Color(0xd99a3d);
+  for(let i=0;i<PMAX;i++){
+    dummy.position.set(0,-999,0); dummy.scale.setScalar(0); dummy.updateMatrix();
+    pIM.setMatrixAt(i,dummy.matrix); pIM.setColorAt(i,c0);
+  }
+}
+const pTmpC=new THREE.Color();
+function burst(worldPos,n,color){
+  let c=0;
+  pTmpC.setHex(color||0xd99a3d);
+  for(let i=0;i<PMAX;i++){
+    const p=parts[i];
+    if(p.alive) continue;
+    p.alive=true; p.t=0;
+    p.p.copy(worldPos);
+    p.s=.8+Math.random()*.6;
+    p.v.set((Math.random()-.5)*7, Math.random()*5+2, (Math.random()-.5)*7);
+    pIM.setColorAt(i,pTmpC);
+    if(++c>=n) break;
+  }
+  if(pIM.instanceColor) pIM.instanceColor.needsUpdate=true;
+}
+
+/* ============ GOLDEN VOXEL — never leaves the visible viewport ============ */
+const UI_W=344;
+let golden=null, nextGolden=performance.now()+(40+Math.random()*70)*1000;
+function spawnGolden(){
+  golden=new THREE.Mesh(new THREE.OctahedronGeometry(.6),
+    new THREE.MeshBasicMaterial({color:0xf5e6b8}));
+  const halo=new THREE.Mesh(new THREE.OctahedronGeometry(.95),
+    new THREE.MeshBasicMaterial({color:0xd99a3d,wireframe:true,transparent:true,opacity:.5}));
+  golden.add(halo);
+  // spawn clear of the terrain: ring zone around the core, above the voxel floor
+  const a=Math.random()*Math.PI*2, r=2.6+Math.random()*4.2;
+  const x=Math.cos(a)*r, z=Math.sin(a)*r;
+  golden.position.set(x, W.colTop(x,z)+1.3+Math.random()*2.4, z);
+  golden.userData.born=performance.now();
+  scene.add(golden);
+  toast('ANOMALY — GOLDEN VOXEL DETECTED','gold');
+}
+function despawnGolden(){ if(golden){ scene.remove(golden); golden=null; } }
+function clampGolden(){
+  if(!golden) return;
+  cam.updateMatrixWorld();
+  const p=golden.position.clone().applyMatrix4(cam.matrixWorldInverse);
+  const d=-p.z;
+  if(d<=.5) return;
+  const t=Math.tan(cam.fov*Math.PI/360);
+  const a=cam.aspect;
+  const xMin=((UI_W+60)/innerWidth)*2-1;
+  const xMax=((innerWidth-50)/innerWidth)*2-1;
+  const yMin=-.85, yMax=.8;
+  let px=p.x/(d*t*a), py=p.y/(d*t), ch=false;
+  if(px<xMin){px=xMin;ch=true} else if(px>xMax){px=xMax;ch=true}
+  if(py<yMin){py=yMin;ch=true} else if(py>yMax){py=yMax;ch=true}
+  if(!ch) return;
+  p.x=px*d*t*a; p.y=py*d*t;
+  golden.position.copy(p.applyMatrix4(cam.matrixWorld));
+}
+function goldenClick(){
+  const p=golden.position.clone();
+  S.goldenClicks++;
+  despawnGolden();
+  nextGolden=performance.now()+(hasPerk('p2')?25+Math.random()*55:50+Math.random()*110)*1000;
+  burst(p,18,0xf0d890);
+  if(Math.random()<0.8){
+    S.frenzies++;
+    S.frenzyUntil=performance.now()+(30+resCache.frenzyAdd)*1000;
+    toast('FRENZY — ALL GAINS ×7 FOR '+Math.round(30+resCache.frenzyAdd)+'s','gold');
+  }else{
+    S.luckies++;
+    const g=gainAuto().mul(600*resCache.goldMul).plus(S.ores.mul(0.15)).plus(25);
+    S.ores=S.ores.plus(g); S.total=S.total.plus(g);
+    toast('LUCKY STRIKE — +'+g.fmt()+' ores','gold');
+    spawnPopup(g.fmt(),{x:innerWidth/2,y:innerHeight/2});
+  }
+  refreshUI();
+}
+
+/* ============ CLICK HANDLING ============ */
+const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
+addEventListener('pointerdown',e=>{
+  if(e.target!==renderer.domElement) return;
+  mouse.set(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight)*2+1);
+  ray.setFromCamera(mouse,cam);
+  const targets=golden?[golden,hitbox]:[hitbox];
+  const hits=ray.intersectObjects(targets,false);
+  if(!hits.length) return;
+  const h=hits[0];
+  if(h.object===golden){ goldenClick(); return; }
+  const g=gainPerClick();
+  S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.clicks++;
+  spawnPopup(g.fmt(),{x:e.clientX,y:e.clientY});
+  burst(h.point,10);
+  W.core.scale.setScalar(CV.scale*.72);
+  refreshUI();
+});
+
+/* ============ UI BUILD — paged for 1792 machines / 433 research / 121 unlocks ============ */
+const treeEl=document.getElementById('tree');
+const bldsEl=document.getElementById('blds');
+let curTier=0, curFam=-1, curAchPage=0;      // curFam -1 = milestones view
+const bRefs={};
+let uRefs={};
+const ACH_PAGE=31;
+
+function buildTierStrip(){
+  const el=document.getElementById('tierStrip');
+  const max=maxVisibleTier();
+  let html='';
+  for(let t=0;t<28;t++){
+    if(t>max) html+='<button class="ts" disabled>?</button>';
+    else{
+      const un=t===0||unlockedTier(t);
+      html+='<button class="ts'+(t===curTier?' on':'')+(un?'':' lk')+'" data-t="'+t+'">'+(t+1)+'</button>';
+    }
+  }
+  el.innerHTML=html;
+  [...el.children].forEach((b,i)=>{ if(!b.disabled) b.onclick=()=>{ curTier=i; buildTierStrip(); buildMachineryPage(); }; });
+}
+function buildMachineryPage(){
+  const p='t'+String(curTier+1).padStart(2,'0')+'m';
+  bldsEl.innerHTML='';
+  for(const k in bRefs) delete bRefs[k];
+  for(const b of BUILDINGS){
+    if(!b.id.startsWith(p)) continue;
+    const d=document.createElement('div');
+    d.className='bld';
+    d.innerHTML='<div><b>'+b.name+'</b><span class="owned"></span>'+
+      '<small>'+b.desc+'</small><small class="rate"></small></div>'+
+      '<div class="cost"></div>';
+    d.onclick=e=>{ buyBuilding(b.id, e.shiftKey?10:1); };
+    bldsEl.appendChild(d);
+    bRefs[b.id]={row:d,owned:d.querySelector('.owned'),rate:d.querySelector('.rate'),cost:d.querySelector('.cost')};
+  }
+  document.getElementById('tierName').textContent='STRATUM '+(curTier+1)+' — '+TIER_META[curTier].name.toUpperCase();
+  refreshUI();
+}
+function buildFamStrip(){
+  const el=document.getElementById('famStrip');
+  let html='<button class="ts'+(curFam<0?' on':'')+'" data-f="-1">MILESTONES</button>';
+  RES_RAW.families.forEach((f,i)=>{
+    html+='<button class="ts'+(curFam===i?' on':'')+'" data-f="'+i+'">'+f.name.toUpperCase()+'</button>';
+  });
+  el.innerHTML=html;
+  [...el.children].forEach(b=>b.onclick=()=>{ curFam=+b.dataset.f; buildFamStrip(); buildResearchPage(); });
+}
+function buildResearchPage(){
+  treeEl.innerHTML='';
+  uRefs={};
+  const items=curFam<0? MILESTONES : UPGRADES.filter(u=>u.famIdx===curFam);
+  if(curFam>=0){
+    const f=RES_RAW.families[curFam];
+    const h=document.createElement('div');
+    h.className='famHead';
+    h.innerHTML='<b>'+f.name.toUpperCase()+'</b> — '+f.blurb+' · '+items.length+' nodes';
+    treeEl.appendChild(h);
+  }
+  for(const u of items){
+    const d=document.createElement('div');
+    d.className='chip';
+    d.innerHTML='<span><b>'+u.name+'</b><small>'+u.desc+'</small></span><span class="cc"></span>';
+    d.onclick=()=>{
+      if(S.up.has(u.id)||!reqOk(u)) return;
+      const c=u.cost.mul(resCache.resDisc);
+      if(S.ores.lt(c)) return;
+      S.ores=S.ores.minus(c);
+      S.up.add(u.id); applyResearch(u);
+      recomputeCoreVisuals();          // research changes the core's look
+      toast('RESEARCH COMPLETE — '+u.name);
+      refreshUI();
+    };
+    treeEl.appendChild(d);
+    uRefs[u.id]={row:d,cc:d.querySelector('.cc')};
+  }
+  refreshUI();
+}
+function buildAchPages(){
+  const pages=Math.ceil(ACHS.length/ACH_PAGE);
+  const el=document.getElementById('achPages');
+  let html='';
+  for(let i=0;i<pages;i++)
+    html+='<button class="ts'+(i===curAchPage?' on':'')+'" data-p="'+i+'">'+(i+1)+'-'+Math.min((i+1)*ACH_PAGE,ACHS.length)+'</button>';
+  el.innerHTML=html;
+  [...el.children].forEach(b=>b.onclick=()=>{ curAchPage=+b.dataset.p; buildAchPages(); $('achs')._k=''; refreshUI(); });
+}
+const tabBtns=[...document.querySelectorAll('#tabs button')];
+function showTab(t){
+  tabBtns.forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  ['blds','tree','achs'].forEach(k=>{
+    document.getElementById('tab-'+k).style.display=k===t?'':'none';
+  });
+  refreshUI();
+}
+tabBtns.forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+document.getElementById('collapseBtn').onclick=()=>{
+  if(!canCollapse()) return;
+  if(confirm('Collapse the mine?\n\nResets ores, machinery and research.\nKeeps: cores, achievements, lifetime total.\nGAIN: +'+coresOnCollapse().toLocaleString()+' cores\nA brand-new seeded seam will be generated.'))
+    collapse();
+};
+document.getElementById('autoBtn').onclick=()=>{
+  S.autobuy=!S.autobuy;
+  document.getElementById('autoBtn').textContent='AUTO-BUY: '+(S.autobuy?'ON':'OFF');
+};
+
+/* diff-based DOM writes — skips unchanged nodes entirely (perf) */
+function putT(el,s){ if(el._t!==s){ el._t=s; el.textContent=s; } }
+function putH(el,s){ if(el._h!==s){ el._h=s; el.innerHTML=s; } }
+const $=id=>document.getElementById(id);
+let fps=0, frames=0, fpsT0=performance.now();
+
+function refreshUI(){
+  const now=performance.now();
+  if(now-fpsT0>=500){ fps=Math.round(frames*1000/(now-fpsT0)); frames=0; fpsT0=now; }
+  const fr=now<S.frenzyUntil;
+
+  putT($('ores'),S.ores.fmt()+' ores');
+  putT($('cps'),gainAuto().fmt()+' /s auto');
+  const L=S.ores.L;
+  putT($('layer'),L>0?('layer '+L+(L>=2?' — tetration scale':'')):'');
+  $('layer').className=L>=2?'tetr':'';
+  putH($('stats'),
+    'click <b>+'+gainPerClick().fmt()+'</b><br>'+
+    'mult <b>'+effMult().fmt()+'</b>'+(fr?' <span style="color:var(--amber)">[FRENZY]</span>':'')+'<br>'+
+    'machinery '+bTotal()+' · clicks '+S.clicks.toLocaleString()+' · '+fps+' fps');
+
+  putT($('coreCount'),S.cores.toLocaleString()+' cores');
+  putT($('coreMult'),'all ×'+coreMult().fmt());
+  const cb=$('collapseBtn');
+  putT(cb,canCollapse()
+    ? 'COLLAPSE MINE  +'+coresOnCollapse().toLocaleString()+' cores'
+    : (S.collapses>0?('needs '+num(PR_REQ).fmt()+' lifetime'):'requires 1e12 lifetime ores'));
+  cb.disabled=!canCollapse();
+  putH($('perks'),PERKS.map(p=>{
+    const on=S.cores>=p.at;
+    return '<div class="perk'+(on?' on':'')+'"><span>'+p.name+' <span style="opacity:.6">'+p.at+'c</span></span>'+
+           '<span class="pk">'+(on?'ACTIVE':p.desc)+'</span></div>';
+  }).join(''));
+  $('autoBtn').className=hasPerk('p1')?'':'hidden';
+
+  const tabB=$('tab-blds').style.display!=='none';
+  const tabT=$('tab-tree').style.display!=='none';
+  const tabA=$('tab-achs').style.display!=='none';
+
+  // tier strip: reveal newly unlocked strata without a full rebuild
+  if(tabB){
+    const mv=maxVisibleTier();
+    const strip=document.getElementById('tierStrip');
+    if(strip._mv!==mv){
+      strip._mv=mv;
+      buildTierStrip();
+    }
+  }
+
+  if(tabB){
+    // only the current tier's 64 rows are live in the DOM
+    for(const id in bRefs){
+      const b=BUILDINGS.find(x=>x.id===id);
+      const r=bRefs[id], n=S.b[id]||0, c=costOf(b);
+      putT(r.owned,n?('x'+n):'');
+      const cps=b.cps.mul(effMult());
+      putT(r.rate,'+'+cps.fmt()+'/s each'+(n?(' · '+cps.mul(num(n)).fmt()+' total'):''));
+      putH(r.cost,c.fmt()+'<small>'+paybackStr(b,c)+'</small>');
+      const cls='bld'+(S.ores.lt(c)?' cant':'');
+      if(r.row._c!==cls){ r.row._c=cls; r.row.className=cls; }
+    }
+  }
+
+  if(tabT){
+    for(const id in uRefs){
+      const u=UPGRADES.find(x=>x.id===id);
+      if(!u) continue;
+      const d=uRefs[id].row, owned=S.up.has(u.id);
+      const disp=owned||reqOk(u)?'':'none';
+      if(d._d!==disp){ d._d=disp; d.style.display=disp; }
+      const cls='chip'+(owned?' owned':(S.ores.lt(u.cost.mul(resCache.resDisc))?' cant':''));
+      if(d._c!==cls){ d._c=cls; d.className=cls; }
+      putT(uRefs[id].cc,owned?'DONE':u.cost.mul(resCache.resDisc).fmt());
+    }
+  }
+
+  putT(tabBtns[2],'Unlocks '+S.ach.length+'/'+ACHS.length);
+  if(tabA){
+    const key=curAchPage+':'+S.ach.length;
+    if($('achs')._k!==key){
+      $('achs')._k=key;
+      const pg=ACHS.slice(curAchPage*ACH_PAGE,(curAchPage+1)*ACH_PAGE);
+      putH($('achs'),pg.map(a=>{
+        const on=S.ach.has(a.id);
+        return '<div class="ach'+(on?' on':'')+'"><b>'+a.name+'</b>'+
+          '<small>'+(on?'unlocked':'locked')+' — '+a.desc+'</small></div>';
+      }).join(''));
+    }
+  }
+
+  const fb=$('frenzy');
+  if(fr){
+    fb.classList.remove('hidden');
+    putT($('frenzyT'),String(Math.ceil((S.frenzyUntil-now)/1000)));
+  } else fb.classList.add('hidden');
+  checkAchs();
+}
+
+/* ============ AUTOBUY (Foreman perk) — buys MAX of the best-return machine ============ */
+function rateOf(b,c){
+  // return rate = cps per ore; tower-scale values compare by layer gap + exponent ratio
+  if(b.cps.L>=2||c.L>=2)
+    return (b.cps.L-c.L)*1e6 + Math.log10(b.cps.E||15) - Math.log10(c.E||15);
+  return b.cps.log10i()-c.log10i();
+}
+setInterval(()=>{
+  if(!hasPerk('p1')||!S.autobuy) return;
+  const max=maxVisibleTier();
+  let best=null, bc=null, br=-Infinity;
+  for(const b of BUILDINGS){
+    if(b.tier>max) continue;
+    const c=costOf(b);
+    if(S.ores.gte(c)){
+      const r=rateOf(b,c);
+      if(r>br){ br=r; best=b; bc=c; }
+    }
+  }
+  if(best) buyBuilding(best.id,1e9);   // buy max affordable of the best value
+},2000);
+
+/* ============ MAIN LOOP ============ */
+load();
+if(!S.seed) S.seed=(Math.random()*2147483647)|0;
+buildWorld(S.seed);
+buildTierStrip();
+buildMachineryPage();
+buildFamStrip();
+buildResearchPage();
+refreshUI();
+setInterval(save,10000);
+addEventListener('beforeunload',save);
+addEventListener('visibilitychange',()=>{ if(document.hidden) save(); });
+
+let last=performance.now();
+function tick(now){
+  const dt=Math.min((now-last)/1000,1); last=now;
+  frames++;
+  const g=gainAuto().mul(dt);
+  S.ores=S.ores.plus(g); S.total=S.total.plus(g);
+
+  const t=now/1000;
+  const fr=now<S.frenzyUntil;
+
+  // core
+  W.core.scale.setScalar(W.core.scale.x+(CV.scale-W.core.scale.x)*.14);
+  W.core.rotation.y+=dt*CV.spin; W.core.rotation.x+=dt*CV.spin*.4;
+  W.coreMat.emissiveIntensity=CV.emissive*(fr?1.5:1)*(.85+.15*Math.sin(now/280));
+  W.coreMat.color.copy(fr?W.cColF:W.cCol);
+  W.glow.material.opacity=(fr?.4:.24)+.06*Math.sin(now/350);
+  W.glow.scale.setScalar(11*CV.scale);
+  W.plight.intensity=(fr?1.6:.85)*CV.emissive*(.85+.15*Math.sin(now/280));
+  W.plight.distance=22*CV.scale;
+
+  if(CV.hyper){ W.hyper.rotation.x-=dt*.7; W.hyper.rotation.y+=dt*.5; }
+  if(CV.ring){ W.ring.rotation.x+=dt*.9; W.ring.rotation.y+=dt*.4; }
+  if(CV.beam){
+    W.beam.rotation.y+=dt*.3;
+    W.beamMat.opacity=.05+Math.min(S.cores,500)/5000+.02*Math.sin(now/400);
+  }
+
+  // shards
+  for(let i=0;i<W.shardP.length;i++){
+    const p=W.shardP[i];
+    if(i<CV.shards){
+      const a=t*p.spd+p.off;
+      dummy.position.set(Math.cos(a)*p.r, 2+Math.sin(t*1.6+p.ph)*p.amp, Math.sin(a)*p.r);
+      dummy.rotation.set(t*2+p.ph, t*3+p.ph, 0);
+      dummy.scale.setScalar(p.sz);
+    } else dummy.scale.setScalar(0);
+    dummy.updateMatrix();
+    W.shardsIM.setMatrixAt(i,dummy.matrix);
+  }
+  W.shardsIM.instanceMatrix.needsUpdate=true;
+
+  // pulse rings — seeded color & reach; EXACT voxel-column ground detection:
+  //  1) discrete: expanding radius crossing an integer column with a raised
+  //     voxel top erupts sparks at that column's exact top AND re-suspends
+  //     grounded debris nearby (the wave kicks the rubble)
+  //  2) continuous: vertices sample the RENDERED voxel height (colTop), and
+  //     flare white-hot where a taller column stands ahead of the wavefront
+  {
+    const RSEG=W.rseg, hRef=FLOOR_Y;
+    const hitV=new THREE.Vector3();
+    const rc=W.ringCol;
+    W.rings.forEach(m=>{
+      const ph=(t*W.ringSpd+m.userData.ph)%1;
+      const R=.7+ph*(W.ringMaxR-.7);
+      let prevR=m.userData.prevR;
+      if(prevR===undefined||prevR>R) prevR=0;      // new cycle
+      m.userData.prevR=R;
+      const fade=1-ph;
+      const pa=m.geometry.attributes.position.array;
+      const ca=m.geometry.attributes.color.array;
+      // 1) exact column-crossing impacts + debris kick
+      for(let cx=-9;cx<=9;cx++)for(let cz=-9;cz<=9;cz++){
+        const d=Math.hypot(cx,cz);
+        if(d>prevR&&d<=R){
+          const h=W.topAt(cx,cz);                   // integer args = exact column
+          if(h>hRef+.18){                           // raised voxel — impact!
+            hitV.set(cx,h+.1,cz);
+            burst(hitV,2,rc.getHex());
+            for(let i=0;i<PMAX;i++){                // wave occasionally flicks grounded rubble
+              const q=parts[i];
+              if(q.alive&&q.v.y===0&&Math.random()<.22&&
+                 Math.abs(q.p.x-cx)<.9&&Math.abs(q.p.z-cz)<.9){
+                q.v.y=1+Math.random()*1.1;          // gentle hop — no lifetime reset, still fades
+              }
+            }
+          }
+        }
+      }
+      // 2) terrain-riding ring with wall-ahead flash (voxel-exact heights)
+      for(let i=0;i<RSEG;i++){
+        const a=i/RSEG*Math.PI*2;
+        const ca2=Math.cos(a), sa2=Math.sin(a);
+        const x=ca2*R, z=sa2*R;
+        const h=W.colTop(x,z);
+        const hAhead=W.colTop(ca2*(R+W.ringW),sa2*(R+W.ringW));
+        const wall=Math.min(1,Math.max(0,(hAhead-h)/.55));   // 0..1 wall steepness
+        pa[i*3]=x; pa[i*3+1]=h+.09; pa[i*3+2]=z;
+        const k=fade*(.4+wall*1.5);
+        ca[i*3]  =rc.r*k+wall*fade*.65;
+        ca[i*3+1]=rc.g*k+wall*fade*.65;
+        ca[i*3+2]=rc.b*k+wall*fade*.6;
+      }
+      m.geometry.attributes.position.needsUpdate=true;
+      m.geometry.attributes.color.needsUpdate=true;
+      m.material.opacity=.26+.34*fade;
+    });
+  }
+
+  // dust motes — kept above the voxel floor so they never sink into terrain
+  {
+    const pa=W.dust.geometry.attributes.position.array;
+    for(let i=0;i<W.dpar.length;i++){
+      const p=W.dpar[i], a=p.a+t*p.rs;
+      const dx=Math.cos(a)*p.r, dz=Math.sin(a)*p.r;
+      const h=W.colTop(dx,dz)+.25;
+      const y=p.y+Math.sin(t*p.spd+p.ph)*.5;
+      pa[i*3]=dx;
+      pa[i*3+1]=y>h?y:h;
+      pa[i*3+2]=dz;
+    }
+    W.dust.geometry.attributes.position.needsUpdate=true;
+  }
+
+  // particles — gravity-locked debris: falls decisively, rests on terrain, never hovers
+  let anyP=false;
+  for(let i=0;i<PMAX;i++){
+    const p=parts[i];
+    if(!p.alive){ continue; }
+    anyP=true;
+    p.t+=dt;
+    const gh=W.colTop(p.p.x,p.p.z);          // exact rendered voxel top — rests flush
+    if(p.p.y<=gh+.02){
+      p.p.y=gh+.02;
+      p.v.set(p.v.x*.25,0,p.v.z*.25);      // skid, no bounce-hover
+      p.t+=dt*6;                             // grounded debris fades fast
+    }else{
+      p.v.y-=22*dt;                          // heavy fall
+      p.p.addScaledVector(p.v,dt);
+      if(p.p.y<gh+.02) p.p.y=gh+.02;        // never tunnel through a voxel
+    }
+    const k=1-p.t/.85;
+    if(k<=0){ p.alive=false; dummy.scale.setScalar(0); }
+    else dummy.scale.setScalar(Math.max(p.s*k,.01));
+    dummy.position.copy(p.p);
+    dummy.rotation.set(p.t*5,p.t*4,0);
+    dummy.updateMatrix();
+    pIM.setMatrixAt(i,dummy.matrix);
+  }
+  if(anyP) pIM.instanceMatrix.needsUpdate=true;
+
+  // golden voxel lifecycle
+  if(!golden && now>nextGolden) spawnGolden();
+  if(golden){
+    golden.rotation.y+=dt*2.4;
+    golden.position.y+=Math.sin(t*3)*dt*.6;
+    clampGolden();
+    if(now-golden.userData.born>12000+resCache.goldenLinger*1000){
+      despawnGolden();
+      nextGolden=now+(60+Math.random()*120)*1000;
+    }
+  }
+
+  controls.update();
+  // hard floor clamp — damping can nudge past the polar limit on slow frames
+  {
+    const fy=W.colTop(cam.position.x,cam.position.z)+.8;
+    if(cam.position.y<fy) cam.position.y=fy;
+  }
+  renderer.render(scene,cam);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+setInterval(refreshUI,250);
+addEventListener('resize',()=>{
+  cam.aspect=innerWidth/innerHeight;
+  cam.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
