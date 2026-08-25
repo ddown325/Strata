@@ -65,6 +65,13 @@
   .ts:disabled{opacity:.22;cursor:default}
   .tierName{font-size:11px;color:var(--dim);letter-spacing:2px;margin:2px 0 8px;
             border-bottom:1px dashed var(--line2);padding-bottom:6px}
+  #buyRow{display:flex;gap:4px;margin:0 0 8px}
+  #buyRow button{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--dim);
+       font-family:inherit;font-size:10px;letter-spacing:1px;padding:5px 0;cursor:pointer;
+       transition:all .12s}
+  #buyRow button:hover{color:var(--txt);border-color:var(--dim)}
+  #buyRow button.on{border-color:var(--amber);color:var(--amber)}
+  #buyRow button small{display:block;font-size:8px;color:var(--faint);letter-spacing:.5px;margin-top:1px}
   .famHead{font-size:10.5px;color:var(--dim);letter-spacing:1px;margin-bottom:8px;
            border-bottom:1px dashed var(--line2);padding-bottom:6px}
 
@@ -341,6 +348,12 @@
     <div id="tab-blds">
       <div id="tierStrip"></div>
       <div id="tierName" class="tierName"></div>
+      <div id="buyRow">
+        <button data-q="1" class="on">BUY 1</button>
+        <button data-q="10">BUY 10</button>
+        <button data-q="100">BUY 100</button>
+        <button data-q="max">MAX</button>
+      </div>
       <div id="blds"></div>
     </div>
     <div id="tab-tree" style="display:none">
@@ -688,6 +701,31 @@ const TIER_META=[];
 function costOf(b){
   const n=S.b[b.id]||0;
   return b.base.mul(BN.fromLog10(n*Math.log10(1.15))).mul(resCache.machDisc);
+}
+/* ============ BUY QUANTITY (1 / 10 / 100 / MAX with scaled prices) ============ */
+let buyQty=1;                                 // 1, 10, 100, or 'max'
+function maxAffordable(b){
+  // how many of b can be bought right now (geometric 1.15 cost growth)
+  let n=0;
+  let spent=num(0);
+  let c=costOf(b);
+  while(n<10000){
+    if(spent.plus(c).gt(S.ores)) break;
+    spent=spent.plus(c);
+    n++;
+    c=c.mul(BN.fromLog10(Math.log10(1.15)));    // one more unit = x1.15
+  }
+  return n;
+}
+function qtyFor(b){ return buyQty==='max'? Math.max(1,maxAffordable(b)) : buyQty; }
+function batchCost(b,n){
+  // total price of buying n units starting from current count (closed-form-ish sum)
+  if(n<=1) return costOf(b);
+  const base=costOf(b);
+  // sum = base * (1.15^n - 1) / 0.15  — exact geometric series
+  const p=Math.pow(1.15,n);
+  if(isFinite(p)&&p<1e290) return base.mul(num((p-1)/.15));
+  return base.mul(BN.fromLog10(n*Math.log10(1.15)));   // asymptotic for huge n
 }
 function buyBuilding(id,n){
   const b=BUILDINGS.find(x=>x.id===id);
@@ -1167,6 +1205,43 @@ const PALETTES=[
   {a:0x14161a,b:0x1a1d22,core:0xc0c8d4,acc:0xaab4c4},
   {a:0x231a26,b:0x2b2030,core:0xc98ad9,acc:0xead8f0},
 ];
+/* gradient + full-wheel floor palettes: mult-color tiles that sweep the hue
+   wheel or span a seeded gradient, applied via seeded per-mine floor paint  */
+const FLOOR_PAINTS=[
+  {kind:'duo'},                       // classic two-tone (palette a/b)
+  {kind:'gradient'},                  // a -> b swept across the pit
+  {kind:'radialGrad'},                // core color fading to dark outward
+  {kind:'wheel'},                     // full color wheel by angle
+  {kind:'wheelRings'},                // rainbow concentric rings
+  {kind:'triad'},                     // 3 complementary colors in the tile pattern
+  {kind:'splitWheel'},                // hue wheel split into two half-arcs
+  {kind:'pastelWheel'},               // full wheel, low saturation
+];
+function floorPaintFor(kind,pal,rng){
+  // returns {paint(x,z,tile)->THREE.Color}
+  const A=new THREE.Color(pal.a), B=new THREE.Color(pal.b), C=new THREE.Color(pal.core);
+  const hueOff=rng(), sat=rng()*.35+.4, li=.28+rng()*.22;
+  const g2=new THREE.Color().setHSL(rng(),sat*.7,li);
+  const hsl={};
+  switch(kind){
+    case 'gradient':
+      return (x,z)=>A.clone().lerp(g2,(x+24)/48);
+    case 'radialGrad':
+      return (x,z)=>{ const r=Math.hypot(x,z)/24; return C.clone().multiplyScalar(1-r*.75).lerp(new THREE.Color(0x060505),r*.8); };
+    case 'wheel':
+      return (x,z)=>new THREE.Color().setHSL((Math.atan2(z,x)/(Math.PI*2)+.5+hueOff)%1,sat,li+.1);
+    case 'wheelRings':
+      return (x,z)=>new THREE.Color().setHSL((Math.hypot(x,z)/24+hueOff)%1,sat,li);
+    case 'triad':
+      return (x,z,tile)=>new THREE.Color().setHSL((hueOff+(tile?1/3:0))%1,sat,li+.06);
+    case 'splitWheel':
+      return (x,z)=>{ const a=Math.atan2(z,x); return new THREE.Color().setHSL((hueOff+(a>0?0:.5))%1,sat,li+.05); };
+    case 'pastelWheel':
+      return (x,z)=>new THREE.Color().setHSL((Math.atan2(z,x)/(Math.PI*2)+.5+hueOff)%1,.22,.55);
+    default:
+      return null;                    // duo handled by caller
+  }
+}
 const CORE_SHAPES=['box','octa','icosa','dodeca','chunk','knot','torus','lathe','spike','cross','cone','prism'];
 const glowTexture=(()=>{
   const c=document.createElement('canvas'); c.width=c.height=128;
@@ -1281,13 +1356,13 @@ function skyStarColor(P,th,ph,r,i){
 }
 function buildSky(g,rng,type,P){
   const R=88+rng()*26;
-  const mkPoints=(pos,cols,sizes)=>{
+  const mkPoints=(pos,cols,sizes,opacity)=>{
     const geo=new THREE.BufferGeometry();
     geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
     if(cols) geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
     const mat=new THREE.PointsMaterial({
       size:sizes||P.size, sizeAttenuation:true, fog:false,
-      vertexColors:!!cols, transparent:true, opacity:.95,
+      vertexColors:!!cols, transparent:true, opacity:opacity||.95,
       blending:THREE.AdditiveBlending, depthWrite:false});
     const pts=new THREE.Points(geo,mat);
     g.add(pts);
@@ -1295,6 +1370,34 @@ function buildSky(g,rng,type,P){
   };
   const colAt=h=>new THREE.Color().setHSL(h,.65,.6+rng()*.25);
   buildSkyPalette(type,rng,P);   // family colors + seeded mix pattern
+  // DEEP COLOR LAYER — huge soft points form math-driven color patches,
+  // halos and gradient illusions behind the star field
+  {
+    const dpos=[],dcols=[];
+    const patches=4+Math.floor(rng()*7);
+    const pSat=.5+rng()*.4, pLight=.1+rng()*.16, pSize=P.size*(26+rng()*34);
+    const pMode=Math.floor(rng()*4);
+    for(let k=0;k<patches;k++){
+      // patch anchor on the sky sphere
+      const th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1);
+      const cx=R*.94*Math.sin(ph)*Math.cos(th), cy=R*.94*Math.cos(ph), cz=R*.94*Math.sin(ph)*Math.sin(th);
+      const hue=pMode===0? P.colA.getHSL({}).h+(rng()-.5)*.2
+                : pMode===1? rng()
+                : pMode===2? P.colA.getHSL({}).h+ (k/patches)*.3
+                : P.colB.getHSL({}).h;
+      const base=new THREE.Color().setHSL((hue+1)%1,pSat,pLight);
+      const pc=8+Math.floor(rng()*14);
+      for(let j=0;j<pc;j++){
+        // gaussian-ish scatter -> soft-edged patches
+        const a1=rng()*Math.PI*2, rad=Math.pow(rng(),.6)*R*.42;
+        const x=cx+Math.cos(a1)*rad, y=cy+(rng()-.5)*rad*.8, z=cz+Math.sin(a1)*rad;
+        dpos.push(x,y,z);
+        const c=base.clone().lerp(P.colB,rng()*.35);
+        dcols.push(c.r,c.g,c.b);
+      }
+    }
+    mkPoints(dpos,dcols,pSize,.34);
+  }
   const ct=Math.cos(P.tilt), st=Math.sin(P.tilt), cs=Math.cos(P.spin), ss=Math.sin(P.spin);
   const tiltSpin=(x,y,z)=>{
     const y2=y*ct-z*st, z2=y*st+z*ct;
@@ -1601,6 +1704,9 @@ function buildWorld(seed){
   const qTiles=[[],[],[],[]];
   tiles.forEach(t=>qTiles[quadOf(t[0],t[1])].push(t));
   const cA=new THREE.Color(pal.a), cB=new THREE.Color(pal.b);
+  // seeded floor paint: classic duo, gradient, radial, full-wheel, triad...
+  const paintKind=FLOOR_PAINTS[Math.floor(rng()*FLOOR_PAINTS.length)].kind;
+  const paint=floorPaintFor(paintKind,pal,rng);
   const BASE=FLOOR_Y-3.2;
   const floorMeshes=qTiles.map((qt,qi)=>{
     const geo=boxGeo.clone();                     // own geometry = own bounding sphere
@@ -1617,8 +1723,14 @@ function buildWorld(seed){
       dummy.updateMatrix();
       im.setMatrixAt(i,dummy.matrix);
       const fade=Math.min(1,Math.max(0,(r-7.5)/13));
-      tmp.copy(tileA(x,z)?cA:cB).multiplyScalar(.85+rng()*.3)
-         .lerp(bg,fade*.94);
+      if(paint){
+        tmp.copy(paint(x,z,tileA(x,z)))
+           .multiplyScalar(.85+rng()*.3)
+           .lerp(bg,fade*.82);          // pattern survives into the void (soft fade)
+      }else{
+        tmp.copy(tileA(x,z)?cA:cB).multiplyScalar(.85+rng()*.3)
+           .lerp(bg,fade*.94);
+      }
       im.setColorAt(i,tmp);
     });
     g.add(im);
@@ -2225,6 +2337,8 @@ function initMusic(){
   }catch(e){}
 }
 addEventListener('keydown',e=>{
+  const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement&&document.activeElement.tagName);
+  if(typing&&(e.key==='m'||e.key==='M')) return;   // never mute while naming a mine
   if((e.key==='m'||e.key==='M')&&music){
     musicMuted=!musicMuted;
     music.volume=musicMuted?0:.85;
@@ -2288,11 +2402,18 @@ function buildMachineryPage(){
     d.innerHTML='<div><b>'+b.name+'</b><span class="owned"></span>'+
       '<small>'+b.desc+'</small><small class="rate"></small></div>'+
       '<div class="cost"></div>';
-    d.onclick=e=>{ buyBuilding(b.id, e.shiftKey?10:1); };
+    d.onclick=e=>{ buyBuilding(b.id, qtyFor(b)); };
     bldsEl.appendChild(d);
     bRefs[b.id]={row:d,owned:d.querySelector('.owned'),rate:d.querySelector('.rate'),cost:d.querySelector('.cost')};
   }
   document.getElementById('tierName').textContent='STRATUM '+(curTier+1)+' — '+TIER_META[curTier].name.toUpperCase();
+  {
+    const row=document.getElementById('buyRow');
+    [...row.children].forEach(btn=>{
+      btn.classList.toggle('on',btn.dataset.q===String(buyQty));
+      btn.onclick=()=>{ buyQty=btn.dataset.q==='max'?'max':+btn.dataset.q; buildMachineryPage(); };
+    });
+  }
   refreshUI();
 }
 function buildFamStrip(){
@@ -2584,11 +2705,15 @@ function refreshUI(){
     for(const id in bRefs){
       const b=BUILDINGS.find(x=>x.id===id);
       const r=bRefs[id], n=S.b[id]||0, c=costOf(b);
+      const q=qtyFor(b);
+      const bc=q>1? batchCost(b,q) : c;
       putT(r.owned,n?('x'+n):'');
       const cps=b.cps.mul(effMult());
       putT(r.rate,'+'+cps.fmt()+'/s each'+(n?(' · '+cps.mul(num(n)).fmt()+' total'):''));
-      putH(r.cost,c.fmt()+'<small>'+paybackStr(b,c)+'</small>');
-      const cls='bld'+(S.ores.lt(c)?' cant':'');
+      const qLabel=(buyQty==='max'&&maxAffordable(b)===0)?'1':
+        (buyQty==='max'? maxAffordable(b) : buyQty);
+      putH(r.cost,bc.fmt()+(q>1||buyQty==='max'?'<small>×'+qLabel+' · '+paybackStr(b,bc)+'</small>':'<small>'+paybackStr(b,c)+'</small>'));
+      const cls='bld'+(S.ores.lt(bc)&&buyQty!=='max'?' cant':'');
       if(r.row._c!==cls){ r.row._c=cls; r.row.className=cls; }
     }
   }
@@ -2702,7 +2827,10 @@ function introUpdate(){                      // called once the seed is known
     ui.classList.toggle('closed',document.body.classList.contains('termClosed'));
   };
   tgl.addEventListener('click',toggle);
-  addEventListener('keydown',e=>{ if(e.key==='t'||e.key==='T') toggle(); });
+  addEventListener('keydown',e=>{ 
+    const typing=/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement&&document.activeElement.tagName);
+    if(typing) return;                              // T only toggles when not typing
+    if(e.key==='t'||e.key==='T') toggle(); });
 }
 
 /* ============ MAIN LOOP ============ */
