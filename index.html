@@ -2,6 +2,8 @@
 <html>
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
 <title>STRATA</title>
 <style>
   :root{
@@ -11,6 +13,7 @@
     --amber:#d99a3d; --good:#8aa668; --bad:#b0603f;
     --accent2:#83e952;   /* wave color echo — set per seed */
     --panelGlow:rgba(217,154,61,.05);
+    --uiW:344px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -18,7 +21,7 @@
        font-family:ui-monospace,'Cascadia Mono','JetBrains Mono',Consolas,monospace;
        font-variant-numeric:tabular-nums;font-size:13px;
        transition:background .6s ease}
-  canvas{display:block}
+  canvas{display:block;touch-action:none}
 
   #hud{position:fixed;top:0;right:0;text-align:right;padding:18px 20px;z-index:10;pointer-events:none}
   #ores{margin:0;font-size:26px;color:var(--amber);font-weight:700;letter-spacing:.5px;
@@ -27,7 +30,7 @@
   #layer{color:var(--faint);font-size:11px;margin-top:3px;letter-spacing:2px;text-transform:uppercase}
   #layer.tetr{color:var(--amber)}
 
-  #ui{position:fixed;top:0;left:0;height:100vh;width:344px;z-index:10;
+  #ui{position:fixed;top:0;left:0;height:100vh;width:var(--uiW);z-index:10;
       background:linear-gradient(160deg,var(--bg1) 0%,var(--bg0) 130%);
       border-right:1px solid var(--line);
       box-shadow:1px 0 24px rgba(0,0,0,.35), inset -1px 0 0 var(--panelGlow);
@@ -252,9 +255,24 @@
   #ui.closed{transform:translateX(-100%);opacity:0;pointer-events:none}
   #ui{transition:transform .25s ease,opacity .25s ease}
   body.termClosed #tToggle{left:14px}
-  body:not(.termClosed) #tToggle{left:358px}
+  body:not(.termClosed) #tToggle{left:calc(var(--uiW) + 14px)}
   body:not(.termClosed) #tToggle .a2{display:none}
   body.termClosed #tToggle .a1{display:none}
+
+  /* ---------- GAMEPAD VIRTUAL CURSOR ---------- */
+  #gcur{position:fixed;z-index:60;width:34px;height:34px;margin:-17px 0 0 -17px;
+        pointer-events:none;display:none;border:2px solid var(--amber);border-radius:50%;
+        box-shadow:0 0 14px var(--panelGlow), inset 0 0 6px var(--panelGlow)}
+  #gcur::before{content:'';position:absolute;inset:-9px;border:1px solid var(--line2);border-radius:50%}
+  #gcur::after{content:'';position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;
+        background:var(--amber);border-radius:50%}
+
+  @media (max-width:760px){
+    :root{--uiW:min(344px,84vw)}
+    #intro h1{font-size:44px;letter-spacing:14px;margin-left:14px}
+    #hud{padding:12px 12px}
+    #ores{font-size:20px}
+  }
 </style>
 </head>
 <body>
@@ -1039,6 +1057,24 @@ controls.minDistance=4;
 controls.target.set(0,1,0);
 controls.maxPolarAngle=Math.PI*0.495;   // never orbit below the horizon of the pit
 controls.minPolarAngle=0.04;
+controls.touches={ONE:THREE.TOUCH.ROTATE, TWO:THREE.TOUCH.DOLLY_PAN};   // 1-finger orbit, 2-finger pinch
+addEventListener('contextmenu',e=>{ if(e.target===renderer.domElement) e.preventDefault(); });
+addEventListener('dblclick',e=>{ if(e.target===renderer.domElement) e.preventDefault(); });
+
+/* ---------- mobile detect + fullscreen ---------- */
+const isTouchy=()=>matchMedia('(pointer:coarse)').matches||(('ontouchstart' in window)&&navigator.maxTouchPoints>0);
+function toggleFS(force){
+  try{
+    const el=document.documentElement;
+    const fsEl=document.fullscreenElement||document.webkitFullscreenElement;
+    if(!fsEl){
+      if(force===false) return;
+      (el.requestFullscreen||el.webkitRequestFullscreen||el.webkitRequestFullScreen||function(){}).call(el);
+    }else if(force!==true){
+      (document.exitFullscreen||document.webkitExitFullscreen||function(){}).call(document);
+    }
+  }catch(e){}
+}
 
 /* invisible camera bounds — a hard sphere the orbit can't escape */
 const CAM_BOUND=23;   // just inside the void plain's edge (floor radius 24)
@@ -1649,6 +1685,79 @@ function goldenClick(){
   refreshUI();
 }
 
+/* ============ GAMEPAD (console) — virtual cursor + A to click ============
+   Left stick / d-pad moves the cursor. A clicks (mines, or activates any UI
+   element under the crosshair). B backs out (modal/archive/terminal).
+   Y toggles the terminal. Start toggles fullscreen.                   */
+const gcur=document.createElement('div');
+gcur.id='gcur';
+document.body.appendChild(gcur);
+let gcx=innerWidth/2, gcy=innerHeight/2, gcurOn=false;
+let gpA=false, gpB=false, gpY=false, gpSt=false;
+const DEAD=.22;
+function synthClick(x,y){
+  const el=document.elementFromPoint(x,y);
+  if(el){
+    const act=el.closest('button,input,.bld,.chip,.ts,.mCard');
+    if(act){
+      if(act.tagName==='INPUT'){ act.focus(); return; }
+      act.click(); return;
+    }
+    if(el!==renderer.domElement) return;     // over UI chrome, nothing to do
+  }
+  tryMine(x,y);
+}
+function pollGamepad(dt){
+  let gp=null;
+  try{
+    const pads=navigator.getGamepads?navigator.getGamepads():[];
+    for(const p of pads){ if(p&&p.connected){ gp=p; break; } }
+  }catch(e){}
+  if(!gp){
+    if(gcurOn){ gcurOn=false; gcur.style.display='none'; }
+    gpA=gpB=gpY=gpSt=false;
+    return;
+  }
+  const ax=gp.axes||[], bt=gp.buttons||[];
+  const held=i=>!!(bt[i]&&bt[i].pressed);
+  let dx=0,dy=0;
+  if(Math.abs(ax[0]||0)>DEAD) dx=ax[0];
+  if(Math.abs(ax[1]||0)>DEAD) dy=ax[1];
+  if(held(14)) dx=-1; if(held(15)) dx=1;    // d-pad left / right
+  if(held(12)) dy=-1; if(held(13)) dy=1;    // d-pad up / down
+  if(dx||dy){
+    const l=Math.hypot(dx,dy), spd=620*dt;
+    gcx=Math.max(0,Math.min(innerWidth, gcx+dx/l*spd));
+    gcy=Math.max(0,Math.min(innerHeight, gcy+dy/l*spd));
+    gcurOn=true;
+  }
+  if(gcurOn){ gcur.style.display='block'; gcur.style.left=gcx+'px'; gcur.style.top=gcy+'px'; }
+  // A — click / mine
+  const a=held(0);
+  if(a&&!gpA) synthClick(gcx,gcy);
+  gpA=a;
+  // B — back out
+  const b=held(1);
+  if(b&&!gpB){
+    const md=document.getElementById('modal');
+    const mp=document.getElementById('minesPage');
+    if(md&&!md.classList.contains('hidden')) md.classList.add('hidden');
+    else if(mp&&!mp.classList.contains('hidden')) closeMinesPage();
+    else document.getElementById('tToggle').click();   // toggle terminal
+  }
+  gpB=b;
+  // Y — toggle terminal
+  const y=held(3);
+  if(y&&!gpY) document.getElementById('tToggle').click();
+  gpY=y;
+  // Start — fullscreen
+  const st=held(9);
+  if(st&&!gpSt) toggleFS();
+  gpSt=st;
+}
+addEventListener('gamepadconnected',e=>toast('CONTROLLER CONNECTED — STICK MOVES · A MINES · B BACK'));
+addEventListener('gamepaddisconnected',()=>toast('CONTROLLER DISCONNECTED'));
+
 /* ============ AUDIO: EMBEDDED MUSIC LOOP ============
    Endless Sky, processed: volume x0.909 (1.1x quieter), AAC-LC 32kbps
    (transparent for this ambient mix), loops forever. M toggles. */
@@ -1673,21 +1782,25 @@ addEventListener('keydown',e=>{
 });
 
 const ray=new THREE.Raycaster(), mouse=new THREE.Vector2();
-addEventListener('pointerdown',e=>{
-  if(e.target!==renderer.domElement) return;
-  mouse.set(e.clientX/innerWidth*2-1, -(e.clientY/innerHeight)*2+1);
+function tryMine(x,y){
+  mouse.set(x/innerWidth*2-1, -(y/innerHeight)*2+1);
   ray.setFromCamera(mouse,cam);
   const targets=golden?[golden,hitbox]:[hitbox];
   const hits=ray.intersectObjects(targets,false);
-  if(!hits.length) return;
+  if(!hits.length) return false;
   const h=hits[0];
-  if(h.object===golden){ goldenClick(); return; }
+  if(h.object===golden){ goldenClick(); return true; }
   const g=gainPerClick();
   S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g); S.clicks++;
-  spawnPopup(g.fmt(),{x:e.clientX,y:e.clientY});
+  spawnPopup(g.fmt(),{x:x,y:y});
   burst(h.point,10);
   W.core.scale.setScalar(CV.scale*.72);
   refreshUI();
+  return true;
+}
+addEventListener('pointerdown',e=>{
+  if(e.target!==renderer.domElement) return;
+  tryMine(e.clientX,e.clientY);        // every finger = a swing (multi-tap mining)
 });
 
 /* ============ UI BUILD — paged for 1792 machines / 433 research / 121 unlocks ============ */
@@ -2101,6 +2214,9 @@ function introUpdate(){                      // called once the seed is known
 }
 {
   const el=document.getElementById('intro');
+  document.querySelector('#intro .enter').innerHTML=
+    '[ <b>'+(isTouchy()?'TAP':'CLICK')+' TO BEGIN DESCENT</b> ]'+
+    (isTouchy()?'<div class="sub2">fullscreen · one finger orbits · two fingers zoom · every finger mines</div>':'');
   const cd=document.getElementById('introCd');
   let cdLeft=9;
   const cdIv=setInterval(()=>{
@@ -2114,6 +2230,7 @@ function introUpdate(){                      // called once the seed is known
     el.classList.add('flash');
     el.style.opacity='0';
     setTimeout(()=>el.remove(),950);
+    if(isTouchy()) toggleFS(true);           // mobile: go fullscreen on entry
     controls.enabled=true;                  // hand the camera to the player
     controls.target.set(0,1,0);
     controls.update();
@@ -2336,6 +2453,7 @@ function tick(now){
   }
 
   frames++;
+  pollGamepad(dt);
   const g=gainAuto().mul(dt);
   S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g);
 
