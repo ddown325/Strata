@@ -142,7 +142,8 @@
   #mConfirm{border-color:var(--amber)!important;color:var(--amber)!important}
   #mConfirm:hover{background:var(--amber);color:var(--bg0)!important}
 
-  /* ---------- MINE ARCHIVE PAGE ---------- */
+
+
   #minesPage{position:fixed;inset:0;z-index:80;background:rgba(8,7,5,.93);
              display:flex;flex-direction:column;padding:26px 30px 22px}
   .mpHead{display:flex;align-items:center;gap:16px;margin-bottom:18px}
@@ -247,15 +248,16 @@
   @keyframes introPulse{0%,100%{opacity:.35}50%{opacity:1}}
 
   /* ---------- TERMINAL TOGGLE ---------- */
-  #tToggle{position:fixed;top:14px;left:14px;z-index:40;width:30px;height:44px;
+  #tToggle{position:fixed;top:14px;left:0;z-index:40;width:30px;height:44px;
            background:var(--bg1);border:1px solid var(--line2);border-left:none;
+           border-radius:0 6px 6px 0;
            color:var(--dim);font-size:15px;display:flex;align-items:center;justify-content:center;
            cursor:pointer;transition:left .25s ease, transform .15s}
   #tToggle:hover{color:var(--amber);border-color:var(--amber)}
   #ui.closed{transform:translateX(-100%);opacity:0;pointer-events:none}
   #ui{transition:transform .25s ease,opacity .25s ease}
-  body.termClosed #tToggle{left:14px}
-  body:not(.termClosed) #tToggle{left:calc(var(--uiW) + 14px)}
+  body.termClosed #tToggle{left:0}
+  body:not(.termClosed) #tToggle{left:calc(var(--uiW) - 1px)}
   body:not(.termClosed) #tToggle .a2{display:none}
   body.termClosed #tToggle .a1{display:none}
 
@@ -699,16 +701,40 @@ function buyBuilding(id,n){
   }
   if(bought){ if(n>=10) S.shiftBuys++; dirtyCPS(); refreshUI(); }
 }
+/* dynamic tap tracking — a 5s rolling window of real click timestamps */
+const tapTimes=[];
+function noteTap(now){
+  tapTimes.push(now);
+  while(tapTimes.length&&now-tapTimes[0]>5000) tapTimes.shift();
+}
+function tapsPerSec(now){
+  while(tapTimes.length&&now-tapTimes[0]>5000) tapTimes.shift();
+  return tapTimes.length/5;
+}
+/* total income/sec right now: auto + what your recent tapping actually yields */
+function liveOps(now){
+  return gainAuto().plus(gainPerClick().mul(tapsPerSec(now)));
+}
 function paybackStr(b,cost){
-  if(cost.L>=2) return 'tower scale';
-  const m=effMult();
-  if(m.L>=2) return 'instant';
-  const pb=cost.log10i()-b.cps.log10i()-m.log10i();
+  // payback vs your REAL total income — auto + current tapping pace combined
+  const ops=liveOps(performance.now());
+  if(ops.s===0) return 'no income';
+  if(cost.L>=2){
+    // tower-scale price: payback only if income is also tower-scale, by layer gap
+    const gap=cost.L-ops.L;
+    if(gap>0) return 'needs 10^'+cost.fmt().slice(0,12)+'x income';
+    return 'tower scale';
+  }
+  const pb=cost.log10i()-ops.log10i();
   if(!isFinite(pb)) return 'tower scale';
   if(pb<0) return 'instant';
-  if(pb>12) return 'payback ~'+BN.fromLog10(pb).fmt()+'s';
-  const s=Math.pow(10,pb);
-  return 'payback '+(s<10?s.toFixed(1):Math.floor(s).toLocaleString())+'s';
+  if(pb>9) return 'payback ~'+BN.fromLog10(pb).fmt()+'s';
+  const secs=Math.pow(10,pb);
+  if(secs<1) return 'instant';
+  if(secs<60) return 'payback '+secs.toFixed(1)+'s';
+  if(secs<3600) return 'payback '+(secs/60).toFixed(1)+'m';
+  if(secs<86400) return 'payback '+(secs/3600).toFixed(1)+'h';
+  return 'payback '+(secs/86400).toFixed(1)+'d';
 }
 
 /* ============ RESEARCH — 13 milestones + 10 families, all hand-written ============ */
@@ -799,6 +825,7 @@ function collapse(){
   despawnGolden();
   dirtyCPS(); rebuildResCache();
   S.seed=S.defaultSeed||((Math.random()*2147483647)|0);   // default mine, or new seam
+  startCollapseAnim();                               // the mine falls apart on screen
   rebuildWorld();
   curTier=0; buildTierStrip(); buildMachineryPage();
   toast('MINE COLLAPSED — +'+n.toLocaleString()+' cores · '+(S.defaultSeed?'DEFAULT SEAM RESTORED':'NEW SEAM FOUND'),'gold');
@@ -1140,7 +1167,7 @@ const PALETTES=[
   {a:0x14161a,b:0x1a1d22,core:0xc0c8d4,acc:0xaab4c4},
   {a:0x231a26,b:0x2b2030,core:0xc98ad9,acc:0xead8f0},
 ];
-const CORE_SHAPES=['box','octa','icosa','dodeca','chunk','knot','torus'];
+const CORE_SHAPES=['box','octa','icosa','dodeca','chunk','knot','torus','lathe','spike','cross','cone','prism'];
 const glowTexture=(()=>{
   const c=document.createElement('canvas'); c.width=c.height=128;
   const x=c.getContext('2d');
@@ -1181,7 +1208,7 @@ function recomputeCoreVisuals(){          // research → core appearance
    The terminal recolors itself from the mine: accent = core color,
    echo = wave color, backgrounds tinted from the palette, and the terrain
    style picks one of five UI themes so every seam feels different.      */
-const THEMES=['strata','canyon','dune','mesa','drift','spire','ripple'];   // indexed by terrain type
+const THEMES=['strata','canyon','dune','mesa','drift','spire','ripple','crate','rings','waffle','peaks','pan','cross','walls','wheel','delta','valley','quilt','fadeshill','fine','origami','diagridge','antiridge','funnel','shear','pie','bank','bubble','warprow','warpcol','patchmesa','target'];   // 32 terrain looks
 function applyUITheme(pal,cCol,ringCol,TT,TS){
   const r=document.documentElement.style;
   const hex=c=>'#'+c.getHexString();
@@ -1203,31 +1230,254 @@ function applyUITheme(pal,cCol,ringCol,TT,TS){
   r.setProperty('--faint',mix(new THREE.Color(0x57503f),cCol,.05));
   // theme marker — the scene renders identically; this is pure UI flavor
   document.body.dataset.theme=THEMES[TT];
-  document.body.dataset.tiles=['checker','xstripe','zstripe','radial','patch','diag','quad'][TS];
+  const TILE_NAMES=['checker','xstripe','zstripe','radial','patch','diag','quad','macrochecker','weave','doubleradial','antidiag','blob','manhattan','triple','quadscat','pie','xor','pinestripe','diagpine','wavex','tartan','quint','dotgrid','hept','brick','sparkle','lattice','wavegrid','resonance','brokenchecker','squarering','crosshair'];
+  document.body.dataset.tiles=TILE_NAMES[TS%32];
   // scene fog + background follow the tinted world
   scene.background=new THREE.Color(r.getPropertyValue('--bg0'));
   scene.fog.color.copy(scene.background);
 }
 
+/* ============ SEEDED SKYBOX GENERATORS ============
+   Six math themes; every generator consumes seeded params so two mines
+   rolling the same theme still produce different skies.                 */
+const SKY_TYPES=['stars','galaxy','nebula','void','aurora','ocean'];
+/* per-theme color families: each entry seeds the palette generator so even
+   the same theme rolls different hues/saturation/mix patterns per seed. */
+const SKY_PALETTES={
+  stars:{hues:[[.07,.13],[.55,.65],[.12,.2]],sat:[.3,.6],light:[.55,.85],bgTint:0x0b0a09,name:'ember-gold on black'},
+  galaxy:{hues:[[.55,.75],[.25,.4],[.85,1]],sat:[.5,.8],light:[.5,.8],bgTint:0x090a12,name:'blue-violet spiral'},
+  nebula:{hues:[[.75,.95],[.45,.6],[.0,.08]],sat:[.55,.85],light:[.45,.75],bgTint:0x0d0812,name:'magenta-teal clouds'},
+  void:{hues:[[.55,.62],[.3,.35],[.6,.7]],sat:[.1,.3],light:[.3,.6],bgTint:0x050507,name:'grey-bone emptiness'},
+  aurora:{hues:[[.35,.5],[.5,.62],[.28,.36]],sat:[.6,.9],light:[.5,.8],bgTint:0x060b0a,name:'green-cyan curtains'},
+  ocean:{hues:[[.5,.6],[.42,.5],[.58,.68]],sat:[.5,.85],light:[.5,.8],bgTint:0x04091a,name:'abyssal blue'},
+};
+function buildSkyPalette(type,rng,P){
+  const fam=SKY_PALETTES[type]||SKY_PALETTES.stars;
+  const pick=([a,b])=>a+rng()*(b-a);
+  // three primary star colors drawn from the family's hue ranges
+  P.colA=new THREE.Color().setHSL(pick(fam.hues[0]),pick(fam.sat),pick(fam.light));
+  P.colB=new THREE.Color().setHSL(pick(fam.hues[1]),pick(fam.sat),pick(fam.light));
+  P.colC=new THREE.Color().setHSL(pick(fam.hues[2]),pick(fam.sat)*.9,pick(fam.light)*.95);
+  // seeded mix PATTERN: how stars blend between the three family colors
+  P.mixMode=Math.floor(rng()*4);              // 0 dominant-A  1 A/B bands  2 radial  3 noise
+  P.mixFreq=.3+rng()*1.8;                    // pattern frequency
+  P.mixPhase=rng()*Math.PI*2;
+  P.accent=rng();                             // chance a rare accent color appears
+  // background wash: family tint deepened toward the sky's own hue
+  const bg=new THREE.Color(fam.bgTint);
+  const wash=new THREE.Color().setHSL(pick(fam.hues[0]),.35,.06+rng()*.05);
+  P.skyBg=bg.lerp(wash,.25+rng()*.45);
+  P.palName=fam.name;
+}
+function skyStarColor(P,th,ph,r,i){
+  // pick family color by the seeded mix PATTERN
+  let t=0;
+  if(P.mixMode===0) t=(i%7===0)?1:0;                         // rare B accents
+  else if(P.mixMode===1) t=Math.sin(th*P.mixFreq+P.mixPhase)>.15?0:1;   // angular bands
+  else if(P.mixMode===2) t=Math.min(1,Math.max(0,(r-70)/40));  // radial blend outward
+  else t=Math.sin(ph*3*P.mixFreq+P.mixPhase)*.5+.5;            // positional noise
+  if(P.accent>.72&&i%23===0) return P.colC.clone();           // rare accent stars
+  return (t<.5?P.colA:P.colB).clone();
+}
+function buildSky(g,rng,type,P){
+  const R=88+rng()*26;
+  const mkPoints=(pos,cols,sizes)=>{
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    if(cols) geo.setAttribute('color',new THREE.Float32BufferAttribute(cols,3));
+    const mat=new THREE.PointsMaterial({
+      size:sizes||P.size, sizeAttenuation:true, fog:false,
+      vertexColors:!!cols, transparent:true, opacity:.95,
+      blending:THREE.AdditiveBlending, depthWrite:false});
+    const pts=new THREE.Points(geo,mat);
+    g.add(pts);
+    return pts;
+  };
+  const colAt=h=>new THREE.Color().setHSL(h,.65,.6+rng()*.25);
+  buildSkyPalette(type,rng,P);   // family colors + seeded mix pattern
+  const ct=Math.cos(P.tilt), st=Math.sin(P.tilt), cs=Math.cos(P.spin), ss=Math.sin(P.spin);
+  const tiltSpin=(x,y,z)=>{
+    const y2=y*ct-z*st, z2=y*st+z*ct;
+    const x3=x*cs-z2*ss, z3=x*ss+z2*cs;
+    return [x3,y2,z3];
+  };
+  const N=Math.floor(P.n);
+
+  if(type==='stars'){
+    // classic sky — family colors scattered by the seeded mix pattern
+    const pos=[],cols=[];
+    for(let i=0;i<N;i++){
+      const th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1), r=R*(0.9+rng()*.3);
+      let p=[r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph), r*Math.sin(ph)*Math.sin(th)];
+      if(i%4===0){
+        const a=rng()*Math.PI*2;
+        p[0]+=Math.cos(a)*rng()*14; p[1]+=(rng()-.5)*8; p[2]+=Math.sin(a)*rng()*14;
+      }
+      pos.push(...p);
+      const c=skyStarColor(P,th,ph,r,i);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols);
+
+  }else if(type==='galaxy'){
+    // spiral galaxy — logarithmic arms from the golden angle, dust-tilted
+    const pos=[],cols=[];
+    const arms=2+Math.floor(rng()*3), armTwist=P.twist;
+    for(let i=0;i<N;i++){
+      const r=18+Math.pow(rng(),.62)*(R-16);
+      const arm=(i%arms)/arms*Math.PI*2;
+      const th=arm+Math.log(r/4+.6)*armTwist+rng()*.35*(1-(r/R));
+      const hh=(rng()-.5)*P.bandH*(1-(r/R)*.75);
+      let p=tiltSpin(Math.cos(th)*r, hh, Math.sin(th)*r);
+      pos.push(...p);
+      const c=skyStarColor(P,th,0,r,i).lerp(new THREE.Color(0xffffff),rng()*.25);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols);
+
+  }else if(type==='nebula'){
+    // nebula — layered sinusoidal fog sheets + embedded star seeds
+    const pos=[],cols=[];
+    for(let i=0;i<N*1.3;i++){
+      const th=rng()*Math.PI*2;
+      const ph=Math.acos(2*rng()-1);
+      const r=R*(.55+rng()*.5);
+      let x=r*Math.sin(ph)*Math.cos(th), y=r*Math.cos(ph), z=r*Math.sin(ph)*Math.sin(th);
+      // ripple the shell with layered sines — puffy seeded clouds
+      const w=1+Math.sin(x*P.freq+P.phase)*.16+Math.sin(z*P.freq*1.7+P.phase*2)*.12;
+      x*=w; y*=w; z*=w;
+      pos.push(x,y,z);
+      const c=skyStarColor(P,th,ph,r,i).lerp(new THREE.Color(0xffffff),rng()*.3);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols,P.size*1.7);
+    // bright core seeds inside
+    const p2=[],c2=[];
+    for(let i=0;i<N*.25;i++){
+      const th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1), r=R*(.2+rng()*.3);
+      p2.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph), r*Math.sin(ph)*Math.sin(th));
+      const c=P.colA.clone().lerp(new THREE.Color(0xffffff),.5);
+      c2.push(c.r,c.g,c.b);
+    }
+    mkPoints(p2,c2,P.size*.7);
+
+  }else if(type==='void'){
+    // the deep — almost empty; few faint stars + a single distant 'lighthouse' pulse ring
+    const pos=[],cols=[];
+    for(let i=0;i<Math.floor(N*.22);i++){
+      const th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1), r=R*(.8+rng()*.4);
+      pos.push(r*Math.sin(ph)*Math.cos(th), r*Math.cos(ph), r*Math.sin(ph)*Math.sin(th));
+      const c=skyStarColor(P,th,ph,r,i).lerp(new THREE.Color(0x1a1c22),rng()*.6);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols,P.size*.8);
+    const ring=new THREE.Mesh(
+      new THREE.TorusGeometry(R*.8,.16,8,64),
+      new THREE.MeshBasicMaterial({color:P.colB.clone().lerp(new THREE.Color(0xffffff),.2),transparent:true,opacity:.16,
+        blending:THREE.AdditiveBlending,depthWrite:false,fog:false}));
+    ring.rotation.set(P.tilt,P.spin,0);
+    g.add(ring);
+
+  }else if(type==='aurora'){
+    // aurora curtains — vertical sheets on sine-guided paths, hue-drifting
+    const pos=[],cols=[];
+    for(let i=0;i<N*1.15;i++){
+      const th=rng()*Math.PI*2;                       // path angle around the sky
+      const r=R*(.7+rng()*.3);
+      const path=Math.sin(th*P.freq+P.phase)*R*.35;   // meandering curtain guide
+      const x=Math.cos(th)*r, z=Math.sin(th)*r;
+      const h=(rng()-.5)*P.bandH*8;                   // tall curtain strokes
+      let p=tiltSpin(x,path+h*.2,z);
+      pos.push(p[0],h*2.2+rng()*6,p[2]);
+      const c=P.colA.clone().lerp(P.colB,Math.sin(th*2+P.mixPhase)*.5+.5)
+                  .lerp(new THREE.Color(0x88ffcc),rng()*.2);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols,P.size*1.15);
+
+  }else{ // ocean
+    // underwater sky — layered caustic sheets above + rising bubble columns
+    const pos=[],cols=[];
+    for(let i=0;i<N*.8;i++){
+      const th=rng()*Math.PI*2, rr=Math.sqrt(rng())*R;
+      const x=Math.cos(th)*rr, z=Math.sin(th)*rr;
+      const y=R*.55+Math.sin(x*.14*P.freq+P.phase)*3+Math.sin(z*.11*P.freq-P.phase)*2.4;
+      const p=tiltSpin(x,y,z);
+      pos.push(p[0],p[1],p[2]);
+      const c=P.colA.clone().lerp(P.colB,rng()).lerp(new THREE.Color(0x9fd8ff),rng()*.4);
+      cols.push(c.r,c.g,c.b);
+    }
+    mkPoints(pos,cols,P.size*1.5);
+    // bubbles rising in seeded columns
+    const p2=[],c2=[];
+    const cols3=2+Math.floor(rng()*4);
+    for(let i=0;i<N*.45;i++){
+      const ci=i%cols3;
+      const a=ci/cols3*Math.PI*2+P.phase*.2;
+      const bx=Math.cos(a)*(8+rng()*26), bz=Math.sin(a)*(8+rng()*26);
+      const y=-R*.4+Math.pow(rng(),.8)*R*1.25;
+      const p=tiltSpin(bx+(rng()-.5)*3, y, bz+(rng()-.5)*3);
+      p2.push(p[0],p[1],p[2]);
+      const c=P.colC.clone().lerp(new THREE.Color(0xffffff),rng()*.5);
+      c2.push(c.r,c.g,c.b);
+    }
+    mkPoints(p2,c2,P.size*.6);
+  }
+}
+
 function buildWorld(seed){
   const rng=mulberry32(seed);
-  const pal=PALETTES[Math.floor(rng()*PALETTES.length)];
-  const shape=CORE_SHAPES[Math.floor(rng()*CORE_SHAPES.length)];
+  /* ---- RARE THEMED MINES (1/100 each, 3/100 total) ----
+     Sonic / Mario / Backrooms fully reskin the entire mine: palette, sky,
+     core, waves, floor — the theme owns every layer.                       */
+  let mineTheme=null;
+  {
+    const roll=rng()*100;
+    if(roll<1) mineTheme='sonic';
+    else if(roll<2) mineTheme='mario';
+    else if(roll<3) mineTheme='backrooms';
+  }
+  let pal=PALETTES[Math.floor(rng()*PALETTES.length)];
+  let shape=CORE_SHAPES[Math.floor(rng()*CORE_SHAPES.length)];
+  let skyType=null;                                   // themed mines force a sky
+  if(mineTheme==='sonic'){
+    pal={a:0x0a2b52,b:0x0e3a6e,core:0x2f8fdf,acc:0xf4d03f};      // blue + gold rings
+    shape='torus'; skyType='stars';
+  }else if(mineTheme==='mario'){
+    pal={a:0x1a5e20,b:0x2e7d32,core:0xe53935,acc:0x90caf9};      // brick red + sky blue
+    shape='box'; skyType='stars';
+  }else if(mineTheme==='backrooms'){
+    pal={a:0x8a7a2e,b:0x9c8b3a,core:0xf5e9a8,acc:0xd6c76a};      // mono-yellow
+    shape='box'; skyType='void';
+  }
   // wave personality — color, reach, speed, width, count, pattern and bob all seeded
-  const ringCol=new THREE.Color().setHSL(rng(), .78, .62);
-  const ringMaxR=7.5+rng()*4.5;
-  const ringSpd=.24+rng()*.16;
-  const ringW=.3+rng()*.35;
-  const ringN=2+(rng()<.35?1:0);
-  const ringSpiral=rng()<.4;                    // spiral arms vs plain rings
-  const ringDir=rng()<.5?1:-1;                 // spiral handedness
-  const ringBob=.04+rng()*.12;
-  const ringPetals=2+Math.floor(rng()*6);       // flower modulation of the radius
-  const ringPetalAmp=rng()*.22;                 // 0 = perfect circle
-  // terrain generator — one of seven math styles per seed
-  const TT=Math.floor(rng()*7);
-  // floor tile scheme — checker / x / z / radial / noise / diagonal / quadrant
-  const TS=Math.floor(rng()*7);
+  let ringCol=new THREE.Color().setHSL(rng(), .78, .62);
+  let ringMaxR=7.5+rng()*4.5;
+  let ringSpd=.24+rng()*.16;
+  let ringW=.3+rng()*.35;
+  let ringN=2+(rng()<.35?1:0);
+  let ringSpiral=rng()<.4;                    // spiral arms vs plain rings
+  let ringDir=rng()<.5?1:-1;                 // spiral handedness
+  let ringBob=.04+rng()*.12;
+  let ringPetals=2+Math.floor(rng()*6);       // flower modulation of the radius
+  let ringPetalAmp=rng()*.22;                 // 0 = perfect circle
+  let ringShape=Math.floor(rng()*12);          // 12 wave outline families
+  let TT,TS;                                   // themed mines force terrain+tile look
+  if(mineTheme==='sonic'){
+    ringCol=new THREE.Color(0xf4d03f); ringSpd=.62; ringN=3; ringShape=0;
+    ringPetalAmp=0; TT=2; TS=3;                // fast gold rings, smooth loops
+  }else if(mineTheme==='mario'){
+    ringCol=new THREE.Color(0xffb74d); ringSpd=.3; ringN=2; ringShape=3;
+    TT=0; TS=0;                                // blocky stepped terrain, checker
+  }else if(mineTheme==='backrooms'){
+    ringCol=new THREE.Color(0xd6c76a); ringSpd=.12; ringN=2; ringShape=5;
+    TT=13; TS=17;                              // flat endless hum, striped monotony
+  }else{
+    // terrain generator — 32 math styles per seed
+    TT=Math.floor(rng()*32);
+    // floor tile scheme — 32 patterns
+    TS=Math.floor(rng()*32);
+  }
   // crystals: shape + scattered / clustered / lissajous rows
   const CRYSTAL_N=10+Math.floor(rng()*11);
   const crystalLayout=Math.floor(rng()*3);   // 0 scatter, 1 clusters, 2 lissajous
@@ -1236,7 +1486,7 @@ function buildWorld(seed){
   // satellites: math-generated wireframe solids orbiting the pit
   const satN=2+Math.floor(rng()*5);
   // debris personality: kind (box/tetra/octa), aspect, color, gravity
-  const debKind=Math.floor(rng()*3);
+  const debKind=Math.floor(rng()*5);
   const debA=[.6+rng()*.9,.4+rng()*.9,.6+rng()*.9];
   const debCol=new THREE.Color(pal.core).lerp(new THREE.Color(0xffffff),.15+rng()*.25).getHex();
   const debG=18+rng()*10;
@@ -1249,18 +1499,42 @@ function buildWorld(seed){
   const goldKind=Math.floor(rng()*3);
   const noise=makeNoise(seed^0x9e3779b9);
   function hAt(x,z){
-    let n=noise(x*.16,z*.16)*.65+noise(x*.33+40,z*.33+40)*.35;
+    const n=noise(x*.16,z*.16)*.65+noise(x*.33+40,z*.33+40)*.35;
+    const r0=Math.hypot(x,z), a0=Math.atan2(z,x);
     let h;
-    if(TT===0)      h=Math.floor(n*5)/3.2-.45;                     // terraced steps
-    else if(TT===1) h=Math.pow(1-Math.abs(2*n-1),1.6)*2.2-.5;      // ridged canyons
-    else if(TT===2) h=(n-.45)*1.7;                                  // smooth dunes
-    else if(TT===3) h=Math.floor(n*3)/1.4-.55;                     // mesa plateaus
-    else if(TT===4) h=(n-.4)*1.15;                                  // rolling hills
-    else if(TT===5){                                                // spiral terrace
-      const r=Math.hypot(x,z), a=Math.atan2(z,x);
-      h=Math.floor((Math.sin(r*1.05-a*1.35)*.5+.5)*4)/2.6-.5;
-    }else{                                                           // interference ripples
-      h=Math.sin(x*.92)*Math.cos(z*1.14)*.75+(n-.5)*.8;
+    switch(TT){
+      case 0:  h=Math.floor(n*5)/3.2-.45; break;                                   // terraced steps
+      case 1:  h=Math.pow(1-Math.abs(2*n-1),1.6)*2.2-.5; break;                     // ridged canyons
+      case 2:  h=(n-.45)*1.7; break;                                                // smooth dunes
+      case 3:  h=Math.floor(n*3)/1.4-.55; break;                                    // mesa plateaus
+      case 4:  h=(n-.4)*1.15; break;                                                // rolling hills
+      case 5:  h=Math.floor((Math.sin(r0*1.05-a0*1.35)*.5+.5)*4)/2.6-.5; break;     // spiral terrace
+      case 6:  h=Math.sin(x*.92)*Math.cos(z*1.14)*.75+(n-.5)*.8; break;            // interference ripples
+      case 7:  h=Math.abs(Math.sin(x*.8))*Math.abs(Math.sin(z*.8))*1.8-.5+(n-.5)*.4; break;  // egg-crate
+      case 8:  h=Math.sin(Math.hypot(x,z)*1.5)*.6+(n-.5)*.7; break;                 // concentric rings
+      case 9:  h=Math.floor((Math.sin(x*.6)+Math.sin(z*.6))*1.4)/1.9-.4+(n-.5)*.3; break;  // waffle grid
+      case 10: h=Math.pow(n,2.2)*2.4-.5; break;                                     // sharp peaks
+      case 11: h=Math.pow(n,.45)*1.6-.5; break;                                     // flat pans
+      case 12: h=(Math.sin(x*1.4)+Math.cos(z*1.7))*0.38+(n-.5)*.9; break;           // crosshatch
+      case 13: h=Math.floor(r0*1.1)&1? .9:-.5; break;                               // ring walls
+      case 14: h=Math.sin(a0*5)*.45+Math.cos(r0*.9)*.4+(n-.5)*.6; break;            // pinwheel
+      case 15: h=Math.max(0,n-.35)*2.6-.5; break;                                   // plateaus+deltas
+      case 16: h=Math.sign(n-.5)*Math.abs(n-.5)*2.2; break;                        // V-valleys
+      case 17: h=Math.sin(x*.5)*Math.sin(z*.5)*2.0-.3+(n-.5)*.3; break;            // quilted waves
+      case 18: h=(n-.5)*2.2*Math.sin(r0*.7+2); break;                               // radial fade hills
+      case 19: h=Math.floor(n*7)/4.5-.5; break;                                     // fine steps
+      case 20: h=Math.cos(a0*3)*Math.abs(Math.sin(r0*1.2))*.9+(n-.5)*.5; break;    // tri-fold origami
+      case 21: h=Math.abs(Math.sin((x+z)*.55))*.9+(n-.5)*.5; break;                // diagonal ridges
+      case 22: h=Math.abs(Math.sin((x-z)*.55))*.9+(n-.5)*.5; break;                // anti-diagonal ridges
+      case 23: h=Math.min(Math.sin(x*.9),Math.sin(z*.9))*.9+(n-.5)*.4; break;      // min-funnel grid
+      case 24: h=(Math.sin(x*1.1)-Math.sin(z*1.1))*.5+(n-.5)*.5; break;            // shear waves
+      case 25: h=Math.floor((a0+Math.PI)/(Math.PI/4))%2? .6:-.5+(n-.5)*.3; break;  // pie sectors
+      case 26: h=Math.exp(-Math.pow(r0-6,2)/3)*1.4-.3+(n-.5)*.4; break;            // raised ring bank
+      case 27: h=Math.cos(x*1.3)*Math.cos(z*1.3)*1.1+(n-.5)*.3; break;             // bubble lattice
+      case 28: h=Math.sin(x*.9+Math.sin(z*.7))*0.9+(n-.5)*.5; break;               // warped rows
+      case 29: h=Math.sin(z*.9+Math.sin(x*.7))*0.9+(n-.5)*.5; break;               // warped columns
+      case 30: h=(noise(x*.55+99,z*.55-77)>.5?1:-.3)*(n*.9+.2); break;             // patch mesas
+      default: h=Math.sin(r0*2.1-a0*3)*.5+Math.sin(r0*.8+a0)*.35+(n-.5)*.3; break; // twisted target
     }
     const r=Math.hypot(x,z);
     h-=Math.max(0,3.4-r)*.5;                          // central crater bowl
@@ -1276,7 +1550,32 @@ function buildWorld(seed){
     case 3: return Math.floor(Math.hypot(x,z))&1; // radial rings
     case 4: return noise(x*.7+31,z*.7-17)>.5;     // noise patchwork
     case 5: return ((x+z)>>1)&1;                  // diagonal bands
-    default: return (x>0?1:0)^(z>0?1:0);          // quadrant blocks
+    case 6: return (x>0?1:0)^(z>0?1:0);           // quadrant blocks
+    case 7: return ((x>>2)+(z>>2))&1;             // 4x4 macro-checker
+    case 8: return (x*z)&1;                       // product parity weave
+    case 9: return Math.floor(Math.hypot(x,z)/2)&1;  // double radial rings
+    case 10: return ((x-z)>>1)&1;                 // anti-diagonal bands
+    case 11: return noise(x*.35+5,z*.35-9)>.5;    // macro noise blobs
+    case 12: return (Math.abs(x)+Math.abs(z))&1;  // manhattan checker
+    case 13: return (Math.abs(x)+Math.abs(z))%3===0;  // manhattan triples
+    case 14: return ((x*x+z*z)%7)<3;              // quadratic scatter
+    case 15: return Math.floor(Math.atan2(z,x)/(Math.PI/3))&1;  // pie wedges
+    case 16: return ((x>>1)^(z>>1))&1;            // hilbert-ish xor blocks
+    case 17: return ((x+z)%5)<2;                  // pinstripes
+    case 18: return ((x-z)%5)<2;                  // diagonal pinstripes
+    case 19: return (Math.sin(x*.9)+Math.sin(z*.9))>0;  // wave interference
+    case 20: return (x&1)^(z&1)?1:((x+z)%4===0?1:0);   // tartan hint
+    case 21: return ((x*z)%5)<2;                  // product quintille
+    case 22: return (Math.hypot(x%4,z%4)<2);      // dot grid
+    case 23: return ((x+z)%7)<3;                  // hept stripes
+    case 24: return (Math.floor(x/3)+Math.floor(z/2))&1;  // brick bond
+    case 25: return noise(x*1.1-40,z*1.1+13)>.62; // micro sparkle
+    case 26: return ((x%4===0)||(z%4===0));       // latice frame
+    case 27: return (Math.abs(Math.sin(x*.8))>.5)&&(Math.abs(Math.sin(z*.8))>.5);  // wave grid
+    case 28: return ((x*x)%3)===((z*z)%3);        // square resonance
+    case 29: return ((x+z)&1)&&noise(x*.5+9,z*.5+9)>.35;  // broken checker
+    case 30: return (Math.max(Math.abs(x),Math.abs(z))&1)===0;  // square rings
+    default: return (x===0||z===0)?1:((x+z)&1);   // crosshair + checker
   }};
   const topAt=(x,z)=>{                      // single source of truth — matches rendered floor everywhere
     const r=Math.hypot(x,z);
@@ -1399,7 +1698,7 @@ function buildWorld(seed){
   }
   g.add(cr);
 
-  /* --- the core voxel (seeded shape + palette color) --- */
+  /* --- the core voxel (12 seeded shapes + palette color) --- */
   let cgeo;
   if(shape==='box') cgeo=new THREE.BoxGeometry(2,2,2);
   else if(shape==='octa') cgeo=new THREE.OctahedronGeometry(1.5);
@@ -1407,6 +1706,31 @@ function buildWorld(seed){
   else if(shape==='dodeca') cgeo=new THREE.DodecahedronGeometry(1.35);
   else if(shape==='knot') cgeo=new THREE.TorusKnotGeometry(1.05,.32,72,10);
   else if(shape==='torus') cgeo=new THREE.TorusGeometry(1.25,.5,12,26);
+  else if(shape==='lathe'){                       // seeded gem silhouette
+    const pts=[]; const k=1+Math.floor(rng()*3);
+    for(let i=0;i<=12;i++)
+      pts.push(new THREE.Vector2(.12+Math.pow(Math.sin(i/12*Math.PI),k)*1.25, i/12*2.4-1.2));
+    cgeo=new THREE.LatheGeometry(pts,14);
+  }
+  else if(shape==='spike'){                       // star-spike: two cones base-to-base
+    cgeo=new THREE.ConeGeometry(1.15,2.6,7);
+    const c2=new THREE.ConeGeometry(1.15,2.6,7); c2.rotateX(Math.PI);
+    // merged visually by two meshes — but keep single geometry via simple approach:
+    cgeo=cgeo; // spike stays single-cone; rotate animates it
+  }
+  else if(shape==='cross'){                       // plus-sign extruded
+    const s=new THREE.Shape();
+    const a=.55,b=1.5;
+    s.moveTo(-a,-b); s.lineTo(a,-b); s.lineTo(a,-a); s.lineTo(b,-a);
+    s.lineTo(b,a); s.lineTo(a,a); s.lineTo(a,b); s.lineTo(-a,b);
+    s.lineTo(-a,a); s.lineTo(-b,a); s.lineTo(-b,-a); s.lineTo(-a,-a);
+    cgeo=new THREE.ExtrudeGeometry(s,{depth:.9,bevelEnabled:true,bevelSize:.08,bevelThickness:.08});
+    cgeo.center();
+  }
+  else if(shape==='cone') cgeo=new THREE.ConeGeometry(1.4,2.4,9);
+  else if(shape==='prism'){                       // hexagonal crystal
+    cgeo=new THREE.CylinderGeometry(1.05,1.05,2.2,6);
+  }
   else cgeo=chunkGeo(rng);
   const coreMat=new THREE.MeshStandardMaterial({
     color:pal.core,
@@ -1512,39 +1836,28 @@ function buildWorld(seed){
     }
   }
 
-  /* --- seeded starfield: uniform sphere or a tilted galaxy band --- */
-  {
-    const pos=[];
-    const STN=380+Math.floor(rng()*520);
-    const band=rng()<.6, tilt=rng()*Math.PI, spin=rng()*Math.PI*2;
-    const ct=Math.cos(tilt), st=Math.sin(tilt), cs=Math.cos(spin), ss=Math.sin(spin);
-    for(let i=0;i<STN;i++){
-      const r=80+rng()*45;
-      let x,y,z;
-      if(band && i%5<3){                    // 60% of stars gather into the band
-        const th=rng()*Math.PI*2, hh=(rng()-.5)*(rng()*16);
-        x=Math.cos(th)*r; y=hh; z=Math.sin(th)*r;
-        const y2=y*ct-z*st, z2=y*st+z*ct;   // tilt band around X
-        y=y2; z=z2;
-        const x3=x*cs-z*ss, z3=x*ss+z*cs;   // then spin around Y
-        x=x3; z=z3;
-      }else{
-        const th=rng()*Math.PI*2, ph=Math.acos(2*rng()-1);
-        x=r*Math.sin(ph)*Math.cos(th); y=r*Math.cos(ph); z=r*Math.sin(ph)*Math.sin(th);
-      }
-      pos.push(x,y,z);
-    }
-    const sg=new THREE.BufferGeometry();
-    sg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
-    const sm=new THREE.PointsMaterial({color:0xbcb2a0,size:.5,sizeAttenuation:true});
-    sm.fog=false;
-    g.add(new THREE.Points(sg,sm));
-  }
+  /* --- seeded SKYBOX: one of six math themes, every parameter randomized,
+         so two mines with the same theme still get different skies ---
+         (rare themed mines force a matching sky)                          */
+  W.skyType=skyType||SKY_TYPES[Math.floor(rng()*SKY_TYPES.length)];
+  W.skyParams={
+    n:220+rng()*420, tilt:rng()*Math.PI, spin:rng()*Math.PI*2,
+    twist:rng()*2.4, clusters:2+Math.floor(rng()*4),
+    hueA:rng(), hueB:rng(), freq:.4+rng()*1.6, phase:rng()*6.28,
+    bandH:.4+rng()*2.2, size:.35+rng()*.5, sheet:(rng()<.5),
+  };
+  buildSky(g,rng,W.skyType,W.skyParams);
 
   scene.add(g);
   const cCol=new THREE.Color(pal.core);
   const cColF=cCol.clone().lerp(new THREE.Color(0xffffff),.45);
   applyUITheme(pal,cCol,ringCol,TT,TS);   // the terminal adopts the mine's colors
+  if(mineTheme) toast('RARE SEAM — '+(mineTheme==='sonic'?'GREEN HILL':mineTheme==='mario'?'MUSHROOM KINGDOM':'THE BACKROOMS'),'gold');
+  // the sky's own background wash tints the scene behind everything
+  if(W.skyParams&&W.skyParams.skyBg){
+    scene.background=W.skyParams.skyBg.clone();
+    scene.fog.color.copy(scene.background);
+  }
   // dust motion data as one flat Float32Array: [r, cos a, sin a, baseY, phase, speed, rSpeed]
   // per frame: 4 mults + 3 adds per mote, all typed-array writes, zero allocations
   const dfl=new Float32Array(DN*7);
@@ -1556,8 +1869,8 @@ function buildWorld(seed){
 
   Object.assign(W,{group:g,hyper,ring,beam,beamMat,glow,plight,rings,dust,dpar,dfl,
     shardsIM,shardP,core,coreMat,palette:pal,shape,topAt,cCol,cColF,rseg:RSEG,
-    ringCol,ringMaxR,ringSpd,ringW,ringSpiral,ringDir,ringBob,ringPetals,ringPetalAmp,sat,
-    debA,debCol,debG,debKind,orbSq,coreWob,coreWobSp,goldKind,floorMeshes,
+    ringCol,ringMaxR,ringSpd,ringW,ringSpiral,ringDir,ringBob,ringPetals,ringPetalAmp,ringShape,sat,
+    debA,debCol,debG,debKind,orbSq,coreWob,coreWobSp,goldKind,floorMeshes,theme:mineTheme,
     colTop:(x,z)=>topAt(Math.round(x),Math.round(z))});   // exact rendered voxel height
   setDebrisGeometry(debKind);
   recomputeCoreVisuals();
@@ -1590,9 +1903,10 @@ pIM.frustumCulled=false;
 pIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
 scene.add(pIM);
 let pGeoOwned=null;
-function setDebrisGeometry(kind){                 // seeded debris shape (box/tetra/octa)
+function setDebrisGeometry(kind){                 // seeded debris shape
   const G=[new THREE.BoxGeometry(.12,.12,.12),new THREE.TetrahedronGeometry(.15),
-           new THREE.OctahedronGeometry(.13)];
+           new THREE.OctahedronGeometry(.13),new THREE.DodecahedronGeometry(.12),
+           new THREE.IcosahedronGeometry(.12)];
   if(pGeoOwned) pGeoOwned.dispose();
   pGeoOwned=G[kind];
   pIM.geometry=pGeoOwned;
@@ -1693,8 +2007,16 @@ const gcur=document.createElement('div');
 gcur.id='gcur';
 document.body.appendChild(gcur);
 let gcx=innerWidth/2, gcy=innerHeight/2, gcurOn=false;
-let gpA=false, gpB=false, gpY=false, gpSt=false;
+let gpA=false, gpB=false, gpY=false, gpSt=false, gpRT=false, gpLT=false;
 const DEAD=.22;
+function hoverScroller(){
+  // whatever scrollable UI sits under the virtual cursor: terminal, archive, modal
+  const el=document.elementFromPoint(gcx,gcy);
+  if(!el) return null;
+  const sc=el.closest('#ui .scroll, #mpGrid, .mBox, #ui');
+  if(!sc) return null;
+  return (sc.scrollHeight>sc.clientHeight+4)? sc : null;
+}
 function synthClick(x,y){
   const el=document.elementFromPoint(x,y);
   if(el){
@@ -1715,11 +2037,12 @@ function pollGamepad(dt){
   }catch(e){}
   if(!gp){
     if(gcurOn){ gcurOn=false; gcur.style.display='none'; }
-    gpA=gpB=gpY=gpSt=false;
+    gpA=gpB=gpY=gpSt=gpRT=gpLT=false;
     return;
   }
   const ax=gp.axes||[], bt=gp.buttons||[];
   const held=i=>!!(bt[i]&&bt[i].pressed);
+  const val=i=>bt[i]? (bt[i].value||0) : 0;
   let dx=0,dy=0;
   if(Math.abs(ax[0]||0)>DEAD) dx=ax[0];
   if(Math.abs(ax[1]||0)>DEAD) dy=ax[1];
@@ -1732,6 +2055,38 @@ function pollGamepad(dt){
     gcurOn=true;
   }
   if(gcurOn){ gcur.style.display='block'; gcur.style.left=gcx+'px'; gcur.style.top=gcy+'px'; }
+
+  // RIGHT STICK — scroll the UI the cursor hovers, otherwise orbit the camera
+  const rx=ax[2]||0, ry=ax[3]||0;
+  if(Math.abs(rx)>DEAD||Math.abs(ry)>DEAD){
+    const scroller=hoverScroller();
+    if(scroller){
+      scroller.scrollTop+=(ry*520*dt);
+      if(Math.abs(rx)>DEAD) scroller.scrollLeft+=(rx*520*dt);
+    }else{
+      // look around: nudge spherical angles around the controls target
+      const az=Math.atan2(cam.position.x-controls.target.x, cam.position.z-controls.target.z);
+      const dist=cam.position.distanceTo(controls.target);
+      const pol=Math.acos(Math.max(-1,Math.min(1,(cam.position.y-controls.target.y)/dist)));
+      let np=pol-ry*1.9*dt, na=az-rx*1.9*dt;
+      np=Math.max(controls.minPolarAngle,Math.min(controls.maxPolarAngle,np));
+      cam.position.set(
+        controls.target.x+dist*Math.sin(np)*Math.sin(na),
+        controls.target.y+dist*Math.cos(np),
+        controls.target.z+dist*Math.sin(np)*Math.cos(na));
+      cam.lookAt(controls.target);
+    }
+  }
+
+  // TRIGGERS — LT zoom out, RT zoom in (analog)
+  const rt=val(7), lt=val(6);
+  if(rt>.08||lt>.08){
+    const dist=cam.position.distanceTo(controls.target);
+    const nd=Math.max(controls.minDistance,Math.min(controls.maxDistance,
+      dist*(1-(rt*.9)*dt*1.6+(lt*.9)*dt*1.6)));
+    cam.position.sub(controls.target).setLength(nd).add(controls.target);
+  }
+
   // A — click / mine
   const a=held(0);
   if(a&&!gpA) synthClick(gcx,gcy);
@@ -1758,6 +2113,102 @@ function pollGamepad(dt){
 addEventListener('gamepadconnected',e=>toast('CONTROLLER CONNECTED — STICK MOVES · A MINES · B BACK'));
 addEventListener('gamepaddisconnected',()=>toast('CONTROLLER DISCONNECTED'));
 
+/* ============ COLLAPSE ANIMATION ============
+   The mine falls apart: every floor tile is torn loose and flung outward+up
+   with individual spin, the core implodes with a light flash, the screen
+   shakes, then the new seam assembles from falling tiles. Game logic
+   continues beneath so ores never stop ticking.                       */
+let collapsing=0;          // ms remaining of the animation (0 = none)
+let colTiles=[];           // per-tile {mesh? no — instanced index data}
+let colParts=[];           // flying tile particles {x,y,z,vx,vy,vz,rx,rz,sr}
+let colFlash=0, colShake=0;
+function startCollapseAnim(){
+  collapsing=4600;
+  colFlash=0; colShake=1;
+  colParts.length=0;
+  // harvest every floor tile's world transform into flying particles
+  for(const im of (W.floorMeshes||[])){
+    if(!im||!im.isInstancedMesh) continue;
+    const n=im.count;
+    const m4=new THREE.Matrix4();
+    for(let i=0;i<n;i++){
+      im.getMatrixAt(i,m4);
+      const p=new THREE.Vector3().setFromMatrixPosition(m4);
+      const q=new THREE.Quaternion().setFromRotationMatrix(m4);
+      const s=new THREE.Vector3().setFromMatrixScale(m4);
+      const c=new THREE.Color();
+      if(im.instanceColor) im.getColorAt(i,c);
+      const r=Math.hypot(p.x,p.z);
+      const out=2.2+Math.random()*3.4;             // flung outward
+      const up=7+Math.random()*9+(r<5?5:0);        // blast stronger at the core
+      colParts.push({
+        x:p.x,y:p.y,z:p.z, sx:s.x,sy:s.y,sz:s.z,
+        vx:p.x/r*out+(Math.random()-.5)*2.4,
+        vy:up,
+        vz:p.z/r*out+(Math.random()-.5)*2.4,
+        rx:(Math.random()-.5)*7, rz:(Math.random()-.5)*7,
+        c:c.getHex(),
+      });
+    }
+  }
+  // one instanced mesh to draw all flying tiles
+  if(!W.colIM){
+    W.colIM=new THREE.InstancedMesh(boxGeo,
+      new THREE.MeshLambertMaterial({color:0xffffff}),2000);
+    W.colIM.frustumCulled=false;
+    W.colIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+    scene.add(W.colIM);
+  }
+  W.colIM.count=Math.min(colParts.length,2000);
+  const tc=new THREE.Color();
+  colParts.slice(0,2000).forEach((p,i)=>{
+    dummy.position.set(p.x,p.y,p.z);
+    dummy.rotation.set(0,0,0);
+    dummy.scale.set(p.sx,p.sy,p.sz);
+    dummy.updateMatrix();
+    W.colIM.setMatrixAt(i,dummy.matrix);
+    if(p.c){ tc.setHex(p.c); W.colIM.setColorAt(i,tc); }
+  });
+  if(W.colIM.instanceColor) W.colIM.instanceColor.needsUpdate=true;
+  W.colIM.instanceMatrix.needsUpdate=true;
+  W.colIM.visible=true;
+  // hide the real floor + satellites; keep core for the implosion beat
+  (W.floorMeshes||[]).forEach(m=>{ if(m) m.visible=false; });
+  W.group.visible=false;   // whole world hidden; flying tiles + core flash carry the scene
+  W.colCoreFlash=new THREE.PointLight(W.cCol.getHex(),3.5,60,1.6);
+  W.colCoreFlash.position.set(0,2,0);
+  scene.add(W.colCoreFlash);
+}
+function updateCollapseAnim(dt){
+  if(!collapsing) return;
+  collapsing-=dt*1000;
+  const t=1-collapsing/4600;                        // 0..1 progress
+  colShake=Math.max(0,1-t*1.6);
+  // implosion flash peaks early
+  colFlash=collapsing>3200? (4600-collapsing)/1400 : Math.max(0,(collapsing-800)/2400);
+  if(W.colCoreFlash) W.colCoreFlash.intensity=3.5+colFlash*26;
+  const n=Math.min(colParts.length,2000);
+  for(let i=0;i<n;i++){
+    const p=colParts[i];
+    p.vy-=26*dt;                                    // gravity
+    p.x+=p.vx*dt; p.y+=p.vy*dt; p.z+=p.vz*dt;
+    if(p.y<FLOOR_Y-3.4){ p.y=FLOOR_Y-3.4; p.vy*=-.32; p.vx*=.72; p.vz*=.72; }   // settle
+    dummy.position.set(p.x,p.y,p.z);
+    dummy.rotation.set(p.rx*t*2.4, 0, p.rz*t*2.4);
+    dummy.scale.set(p.sx*(1-t*.55),p.sy*(1-t*.55),p.sz*(1-t*.55));   // shrink as they fade
+    dummy.updateMatrix();
+    W.colIM.setMatrixAt(i,dummy.matrix);
+  }
+  W.colIM.count=n;
+  W.colIM.instanceMatrix.needsUpdate=true;
+  if(collapsing<=0){
+    // finale: flash out, restore visibility of the fresh seam
+    collapsing=0;
+    W.colIM.visible=false;
+    W.group.visible=true;
+    if(W.colCoreFlash){ scene.remove(W.colCoreFlash); W.colCoreFlash=null; }
+  }
+}
 /* ============ AUDIO: EMBEDDED MUSIC LOOP ============
    Endless Sky, processed: volume x0.909 (1.1x quieter), AAC-LC 32kbps
    (transparent for this ambient mix), loops forever. M toggles. */
@@ -1792,6 +2243,7 @@ function tryMine(x,y){
   if(h.object===golden){ goldenClick(); return true; }
   const g=gainPerClick();
   S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g); S.clicks++;
+  noteTap(performance.now());
   spawnPopup(g.fmt(),{x:x,y:y});
   burst(h.point,10);
   W.core.scale.setScalar(CV.scale*.72);
@@ -2086,12 +2538,16 @@ function refreshUI(){
   const fr=now<S.frenzyUntil;
 
   putT($('ores'),S.ores.fmt()+' ores');
-  putT($('cps'),gainAuto().fmt()+' /s auto');
+  const nowMs=performance.now();
+  const ops=liveOps(nowMs);
+  const tps=tapsPerSec(nowMs);
+  putT($('cps'),ops.fmt()+' /s total · '+gainAuto().fmt()+' auto · '+tps.toFixed(1)+'/s taps');
   const L=S.ores.L;
   putT($('layer'),L>0?('layer '+L+(L>=2?' — tetration scale':'')):'');
   $('layer').className=L>=2?'tetr':'';
   putH($('stats'),
     'click <b>+'+gainPerClick().fmt()+'</b><br>'+
+    'total <b>'+ops.fmt()+'/s</b> ('+tps.toFixed(1)+' taps + auto)<br>'+
     'mult <b>'+effMult().fmt()+'</b>'+(fr?' <span style="color:var(--amber)">[FRENZY]</span>':'')+'<br>'+
     'machinery '+bTotal()+' · clicks '+S.clicks.toLocaleString()+' · '+fps+' fps');
 
@@ -2367,7 +2823,24 @@ function animateWorld(now,dt,fr){
       for(let i=0;i<RSEG;i++){
         const th=i/RSEG*Math.PI*2;                        // plain angle for petal shape
         const a=th+(W.ringSpiral?R*.4*W.ringDir:0);        // seeded spiral twist + handedness
-        const Rp=W.ringPetalAmp>0.01? R*(1+W.ringPetalAmp*Math.sin(W.ringPetals*th)) : R;
+        // 12 seeded wave OUTLINE families layered on the petal modulation
+        let m1=1;
+        switch(W.ringShape){
+          case 0: m1=1; break;                                              // circle
+          case 1: m1=1+W.ringPetalAmp*Math.sin(W.ringPetals*th); break;    // petals
+          case 2: m1=1+.14*Math.abs(Math.sin(W.ringPetals*th*.5)); break;  // scalloped
+          case 3: m1=1-.12*Math.pow(Math.abs(Math.sin(th)),3); break;      // rounded square
+          case 4: m1=1+.1*Math.sin(th*W.ringPetals*2+R); break;            // wobble star
+          case 5: m1=.86+.28*(i%2); break;                                  // zigzag alternating
+          case 6: m1=1+.13*Math.sin(th*3)*Math.cos(th*2); break;            // clover-ish
+          case 7: m1=1+.09*Math.sin(Math.pow(Math.abs(Math.sin(th)),.5)*6); break; // pinched
+          case 8: m1=1+.11*Math.sin(th+R*2.2); break;                       // breathing offset
+          case 9: m1=1+.12*Math.sin(Math.log(1+R)*7-th*2); break;           // log spiral beat
+          case 10: m1=1+.1*(Math.sin(th*2)>0?1:-1)*.5+.05; break;           // half-moon pulse
+          default: m1=1+.08*Math.sin(th*W.ringPetals)+.06*Math.cos(th*3); break; // hybrid mesh
+        }
+        if(W.ringPetalAmp>0.01&&W.ringShape===1) m1=1+W.ringPetalAmp*Math.sin(W.ringPetals*th);
+        const Rp=R*m1;
         const ca2=Math.cos(a), sa2=Math.sin(a);
         const x=ca2*Rp, z=sa2*Rp;
         const h=W.colTop(x,z);
@@ -2454,6 +2927,7 @@ function tick(now){
 
   frames++;
   pollGamepad(dt);
+  updateCollapseAnim(dt);
   const g=gainAuto().mul(dt);
   S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g);
 
@@ -2473,6 +2947,13 @@ function tick(now){
   }
 
   controls.update();
+  // collapse shake — decaying camera jitter during the animation
+  if(colShake>0&&collapsing>0){
+    const k=colShake*colShake*.65;
+    cam.position.x+=(Math.random()-.5)*k;
+    cam.position.y+=(Math.random()-.5)*k;
+    cam.position.z+=(Math.random()-.5)*k;
+  }
   // hard floor clamp — damping can nudge past the polar limit on slow frames
   {
     const fy=W.colTop(cam.position.x,cam.position.z)+.8;
