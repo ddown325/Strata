@@ -115,12 +115,16 @@
              box-shadow:0 2px 10px rgba(0,0,0,.25)}
   .bld.cant{opacity:.42;cursor:default}
   .bld.cant:hover{border-left-color:var(--line);background:var(--bg2)}
+  .bld>div:first-child{flex:1 1 0;min-width:0;overflow:hidden}   /* name col shrinks, never bleeds */
   .bld b{font-size:12.5px;font-weight:600}
   .bld .owned{color:var(--amber);font-size:11px;margin-left:7px}
   .bld small{display:block;color:var(--faint);font-size:10px;margin-top:2px}
-  .bld .cost{font-size:12px;white-space:nowrap;text-align:right;color:var(--good);line-height:1.4}
+  .bld .rate{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}  /* +X/s each · Y total can get long */
+  .bld .cost{flex:0 0 auto;max-width:62%;font-size:12px;white-space:nowrap;text-align:right;
+             color:var(--good);line-height:1.4;overflow:hidden;text-overflow:ellipsis}
   .bld.cant .cost{color:var(--bad)}
-  .bld .cost small{display:block;color:var(--faint);font-size:9.5px;text-align:right}
+  .bld .cost small{display:block;color:var(--faint);font-size:9.5px;text-align:right;
+                   max-width:100%;overflow:hidden;text-overflow:ellipsis}
 
   .chips{display:flex;flex-direction:column;gap:5px}
   .chip{background:linear-gradient(150deg,var(--bg2),var(--bg1));border:1px solid var(--line);padding:7px 10px;
@@ -132,7 +136,9 @@
   .chip.owned{border-color:transparent;border-left:3px solid var(--good);opacity:.5;cursor:default}
   .chip b{font-size:12px;font-weight:600}
   .chip small{color:var(--faint);font-size:10.5px;margin-left:8px}
-  .chip .cc{font-size:11px;color:var(--good);white-space:nowrap}
+  .chip>span:first-child{min-width:0;overflow:hidden}          /* research name col shrinks, never bleeds */
+  .chip .cc{font-size:11px;color:var(--good);white-space:nowrap;max-width:45%;
+             overflow:hidden;text-overflow:ellipsis;flex:0 0 auto}
   .chip.cant .cc{color:var(--bad)}
 
   .ach{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--line);
@@ -319,7 +325,7 @@
 <div id="hud">
   <h3 id="ores">0 ores</h3>
   <div id="cps"></div>
-  <div id="layer"></div>
+  <div id="layer" title="NOTATION — real: k M B T Qa Qi Sx Sp Oc No Dc … UDc…NoDc, Vg…NoVg, Tg…NoTg, Qd…NoQd, Qq…NoQq, Sg…NoSg, St…NoSt, Og…NoOg, Ng…NoNg, Ce (10^303). Past Ce an invented x-odometer runs forever: xa…xz, xaa…xaz, xba…xzz, xaaa… (10^306=xa, 10^384=xaa). Towers: [10^^L] = 10 tetrated L times."></div>
 </div>
 <div id="frenzy" class="hidden">FRENZY ×7 — <span id="frenzyT">30</span>s</div>
 <div id="toasts"></div>
@@ -411,6 +417,38 @@ if(!window.THREE){
    k ≤ ~9e15. Old engine was broken (mul multiplied exponents, minus
    didn't exist, norm could loop). This one is canonical + tested.      */
 const MAXE = 1e308;   // per-layer exponent ceiling — tower values up to ~10^10^1e308, layers unbounded
+
+/* ============ NOTATION — real suffixes, then an invented odometer ============
+   10^3 .. 10^303 use the standard short-scale idle ladder (REAL names):
+     k M B T Qa Qi Sx Sp Oc No Dc UDc..NoDc Vg..NoVg Tg..NoTg
+     Qd..NoQd Qq..NoQq Sg..NoSg St..NoSt Og..NoOg Ng..NoNg Ce (centillion)
+   Past centillion the ladder is INFINITE by design: suffixes are 'x' + a
+   bijective base-26 odometer (spreadsheet columns) — xa xb … xz, xaa xab …
+   xaz, xba … xzz, xaaa … The x prefix marks invented territory and makes
+   collision with the real mixed-case set IMPOSSIBLE (k vs xk, etc).
+     10^306 → xa   10^309 → xb   …   10^381 → xz   10^384 → xaa   …  forever
+   Tower layers (10^^L) keep their own predetermined notation: [10^^L] m e E,
+   with the inner exponent E itself written in this suffix system.            */
+const SUFFIXES=(()=>{
+  const u=['','U','D','T','Qa','Qi','Sx','Sp','Oc','No'];       // unit prefixes
+  const t=['Dc','Vg','Tg','Qd','Qq','Sg','St','Og','Ng'];        // tens-decade roots
+  const out=['','k','M','B','T','Qa','Qi','Sx','Sp','Oc','No'];  // m=0..10
+  for(let d=0;d<9;d++){ out.push(t[d]); for(let j=1;j<=9;j++) out.push(u[j]+t[d]); } // m=11..100
+  out.push('Ce');                                               // m=101 = 10^303
+  return out;
+})();
+function odom26(n){   // bijective base-26: 1→a … 26→z, 27→aa, 52→az, 53→ba …
+  let s='';
+  while(n>0){ n--; s=String.fromCharCode(97+n%26)+s; n=Math.floor(n/26); }
+  return s;
+}
+function suffixFor(m){ return m<=101 ? SUFFIXES[m] : 'x'+odom26(m-101); }
+function sig3(r){ return r<10?r.toFixed(2):r<100?r.toFixed(1):r.toFixed(0); }
+function fmtExp(E){    // a tower's exponent as a compact suffixed number
+  if(E<1e3) return String(Math.floor(E));
+  const m=Math.floor(Math.log10(E)/3);
+  return sig3(E/Math.pow(10,3*m))+suffixFor(m);
+}
 
 class BN {
   constructor(m=0, E=0, L=0){
@@ -610,11 +648,24 @@ class BN {
     if(this.L===0){
       const v=this.m;
       if(v<1000) return sg+(v<10?v.toFixed(1):v.toFixed(0));
-      return sg+v.toLocaleString(undefined,{maximumFractionDigits:0});
+      const m=Math.floor(Math.log10(v)/3);
+      return sg+sig3(v/Math.pow(10,3*m))+suffixFor(m);
     }
-    if(this.L===1) return sg+this.m.toFixed(2)+'e'+Math.floor(this.E).toLocaleString();
+    if(this.L===1){
+      const X=this.E+Math.log10(this.m);   // exact log10 of the value
+      const m=Math.floor(X/3);
+      return sg+sig3(Math.pow(10,X-3*m))+suffixFor(m);
+    }
+    // display-fold: m is NOT banded at L>=2 (arithmetic keeps it raw), so m can be
+    // 4^63 or 0.3 — m.toFixed(2) would print 20+ digits. Fold m into the exponent
+    // for DISPLAY only: m·10^E = 10^(E+log10 m), keeping 3 sig figs in each slot.
+    let mm=this.m, EE=this.E;
+    if(mm>=10||mm<1){
+      const lm=Math.log10(mm), fl=Math.floor(lm);
+      EE+=fl; mm=Math.pow(10,lm-fl);
+    }
     const Ls=this.L>=1e6 ? this.L.toExponential(3) : this.L;   // hyper-towers: 10^^(1.0e+300)
-    return sg+'[10^^'+Ls+'] '+this.m.toFixed(2)+'e'+Math.floor(this.E).toLocaleString();
+    return sg+'[10^^'+Ls+'] '+sig3(mm)+'e'+fmtExp(EE);
   }
 }
 function num(v){ return BN.of(v); }
@@ -784,13 +835,13 @@ function paybackStr(b,cost){
   if(cost.L>=2){
     // tower-scale price: payback only if income is also tower-scale, by layer gap
     const gap=cost.L-ops.L;
-    if(gap>0) return 'needs 10^'+cost.fmt().slice(0,12)+'x income';
+    if(gap>0) return 'needs '+cost.fmt()+' income';   // income must reach the price for sane payback
     return 'tower scale';
   }
   const pb=cost.log10i()-ops.log10i();
   if(!isFinite(pb)) return 'tower scale';
   if(pb<0) return 'instant';
-  if(pb>9) return 'payback ~'+BN.fromLog10(pb).fmt()+'s';
+  if(pb>9) return 'payback ~'+BN.fromLog10(pb).fmt()+' s';
   const secs=Math.pow(10,pb);
   if(secs<1) return 'instant';
   if(secs<60) return 'payback '+secs.toFixed(1)+'s';
@@ -2893,7 +2944,10 @@ function refreshUI(){
       putT(r.rate,'+'+cps.fmt()+'/s each'+(n?(' · '+cps.mul(num(n)).fmt()+' total'):''));
       const qLabel=(buyQty==='max'&&maxAffordable(b)===0)?'1':
         (buyQty==='max'? maxAffordable(b) : buyQty);
-      putH(r.cost,bc.fmt()+(q>1||buyQty==='max'?'<small>×'+qLabel+' · '+paybackStr(b,bc)+'</small>':'<small>'+paybackStr(b,c)+'</small>'));
+      const pbS=q>1||buyQty==='max'? paybackStr(b,bc) : paybackStr(b,c);
+      putH(r.cost,bc.fmt()+(q>1||buyQty==='max'?'<small>×'+qLabel+' · '+pbS+'</small>':'<small>'+pbS+'</small>'));
+      const tt=bc.fmt()+' — '+pbS;                 // full text on hover if the row ellipsizes it
+      if(r.cost._t!==tt){ r.cost._t=tt; r.cost.title=tt; }
       const cls='bld'+((buyQty!=='max'&&S.ores.lt(bc))||(buyQty==='max'&&maxAffordable(b)===0)?' cant':'');
       if(r.row._c!==cls){ r.row._c=cls; r.row.className=cls; }
     }
@@ -2908,7 +2962,9 @@ function refreshUI(){
       if(d._d!==disp){ d._d=disp; d.style.display=disp; }
       const cls='chip'+(owned?' owned':(S.ores.lt(u.cost.mul(resCache.resDisc))?' cant':''));
       if(d._c!==cls){ d._c=cls; d.className=cls; }
-      putT(uRefs[id].cc,owned?'DONE':u.cost.mul(resCache.resDisc).fmt());
+      const ccT=owned?'DONE':u.cost.mul(resCache.resDisc).fmt();
+      putT(uRefs[id].cc,ccT);
+      if(uRefs[id].cc._t!==ccT){ uRefs[id].cc._t=ccT; uRefs[id].cc.title=u.name+' — '+ccT; }
     }
   }
 
