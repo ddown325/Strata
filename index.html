@@ -35,42 +35,57 @@
       border-right:1px solid var(--line);
       box-shadow:1px 0 24px rgba(0,0,0,.35), inset -1px 0 0 var(--panelGlow);
       display:flex;flex-direction:column}
-  #ui .scroll{overflow-y:auto;overscroll-behavior:contain;padding:0 14px 20px;flex:1}
-  #ui .scroll::-webkit-scrollbar{width:10px}
-  #ui .scroll::-webkit-scrollbar-thumb{background:var(--line2);border:3px solid var(--bg1)}
+  #ui .scroll{overflow-y:auto;overscroll-behavior:contain;padding:0 14px 20px;flex:1;
+               scroll-behavior:smooth}
+  #ui .scroll::-webkit-scrollbar{width:7px}
+  #ui .scroll::-webkit-scrollbar-thumb{background:var(--line2);border:2px solid var(--bg1);border-radius:3px}
   #ui .scroll::-webkit-scrollbar-track{background:transparent}
+  #ui .scroll::-webkit-scrollbar-thumb:hover{background:var(--dim)}
 
-  header{padding:16px 16px 13px;border-bottom:1px solid var(--line);margin:0 -14px;
-         background:linear-gradient(90deg,var(--panelGlow),transparent 60%)}
-  header h1{margin:0;font-size:18px;letter-spacing:7px;color:var(--amber);font-weight:700;
+  header{padding:18px 16px 14px;border-bottom:1px solid var(--line);margin:0 -14px;
+         background:linear-gradient(90deg,var(--panelGlow),transparent 70%)}
+  header h1{margin:0;font-size:18px;letter-spacing:8px;color:var(--amber);font-weight:700;
             text-shadow:0 0 18px var(--panelGlow)}
-  header .sub{color:var(--faint);font-size:10px;letter-spacing:1.5px;margin-top:3px;text-transform:uppercase}
-  #stats{background:var(--bg2);border:1px solid var(--line);padding:9px 11px;
-         font-size:12px;line-height:1.75;color:var(--dim);margin-top:14px}
+  header .sub{color:var(--faint);font-size:10px;letter-spacing:1.5px;margin-top:4px;text-transform:uppercase}
+  #stats{background:var(--bg2);border:1px solid var(--line);border-left:2px solid var(--amber);
+         padding:10px 12px;font-size:11.5px;line-height:1.85;color:var(--dim);margin-top:16px;
+         border-radius:2px}
   #stats b{color:var(--txt);font-weight:600}
 
-  #tabs{display:flex;border-bottom:1px solid var(--line);margin:16px 0 10px}
+  #tabs{display:flex;border-bottom:1px solid var(--line);margin:18px 0 12px;
+        background:var(--bg2);border-radius:3px;padding:3px;gap:2px}
   #tabs button{flex:1;background:none;border:none;border-bottom:2px solid transparent;
-       color:var(--faint);font-family:inherit;font-size:10.5px;letter-spacing:1.5px;
-       padding:8px 0 7px;cursor:pointer;text-transform:uppercase}
-  #tabs button.on{color:var(--amber);border-bottom-color:var(--amber)}
-  #tabs button:hover{color:var(--txt)}
+       color:var(--faint);font-family:inherit;font-size:10px;letter-spacing:1.2px;
+       padding:8px 0 7px;cursor:pointer;text-transform:uppercase;
+       transition:color .15s,border-color .15s,background .15s;border-radius:2px}
+  #tabs button.on{color:var(--amber);border-bottom-color:var(--amber);
+                  background:linear-gradient(180deg,transparent,rgba(217,154,61,.08))}
+  #tabs button:hover{color:var(--txt);background:rgba(255,255,255,.03)}
 
-  #tierStrip,#famStrip,#achPages{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0 8px}
+  #tierStrip,#famStrip{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0 8px}
+  #achHead{margin:10px 0 8px;border-bottom:1px dashed var(--line2);padding-bottom:6px}
+  #achWord{font-size:13px;color:var(--amber);letter-spacing:4px;font-weight:700}
+  #achBoostT{font-size:10.5px;color:var(--dim);letter-spacing:1.5px;margin-top:3px}
+  #achBoostT b{color:var(--amber);font-weight:700}
   .ts{background:var(--bg2);border:1px solid var(--line);color:var(--dim);font-family:inherit;
-      font-size:9.5px;letter-spacing:.5px;padding:4px 6px;cursor:pointer;transition:all .12s}
-  .ts:hover:not(:disabled){color:var(--txt);border-color:var(--dim);transform:translateY(-1px)}
-  .ts.on{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px var(--panelGlow)}
-  .ts.lk{opacity:.45}
+      font-size:10px;letter-spacing:.5px;padding:5px 7px;cursor:pointer;transition:all .14s;
+      border-radius:3px;min-width:24px;text-align:center}
+  .ts:hover:not(:disabled){color:var(--txt);border-color:var(--dim);transform:translateY(-1px);
+                           background:var(--bg1)}
+  .ts.on{border-color:var(--amber);color:var(--amber);box-shadow:0 0 10px var(--panelGlow);
+          background:linear-gradient(180deg,rgba(217,154,61,.12),transparent)}
+  .ts.lk{opacity:.5}
   .ts:disabled{opacity:.22;cursor:default}
   .tierName{font-size:11px;color:var(--dim);letter-spacing:2px;margin:2px 0 8px;
             border-bottom:1px dashed var(--line2);padding-bottom:6px}
-  #buyRow{display:flex;gap:4px;margin:0 0 8px}
+  #buyRow{display:flex;gap:4px;margin:0 0 10px}
   #buyRow button{flex:1;background:var(--bg2);border:1px solid var(--line);color:var(--dim);
-       font-family:inherit;font-size:10px;letter-spacing:1px;padding:5px 0;cursor:pointer;
-       transition:all .12s}
-  #buyRow button:hover{color:var(--txt);border-color:var(--dim)}
-  #buyRow button.on{border-color:var(--amber);color:var(--amber)}
+       font-family:inherit;font-size:10.5px;letter-spacing:1px;padding:6px 0;cursor:pointer;
+       transition:all .14s;border-radius:3px}
+  #buyRow button:hover{color:var(--txt);border-color:var(--dim);background:var(--bg1)}
+  #buyRow button.on{border-color:var(--amber);color:var(--amber);
+                    background:linear-gradient(180deg,rgba(217,154,61,.14),rgba(217,154,61,.04));
+                    box-shadow:0 0 12px rgba(217,154,61,.18)}
   #buyRow button small{display:block;font-size:8px;color:var(--faint);letter-spacing:.5px;margin-top:1px}
   .famHead{font-size:10.5px;color:var(--dim);letter-spacing:1px;margin-bottom:8px;
            border-bottom:1px dashed var(--line2);padding-bottom:6px}
@@ -170,6 +185,7 @@
   .mCard{background:linear-gradient(165deg,var(--bg2),var(--bg1));
          border:1px solid var(--line);display:flex;flex-direction:column}
   .mCard.cur{border-color:var(--amber)}
+  .mCard.gsel{outline:2px solid var(--amber);outline-offset:-2px;box-shadow:0 0 18px var(--panelGlow)}
   .mShotWrap{position:relative}
   .mShot{width:100%;aspect-ratio:16/10;display:block;background:var(--bg0);
          border-bottom:1px solid var(--line);object-fit:cover}
@@ -200,12 +216,15 @@
           padding:7px 22px 8px;color:var(--amber);font-size:12px;letter-spacing:2px}
   .hidden{display:none !important}
 
-  #toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;
-          gap:6px;z-index:30;pointer-events:none}
+  #toasts{position:fixed;left:50%;bottom:38px;transform:translateX(-50%);
+          display:flex;flex-direction:column;align-items:center;gap:8px;z-index:30;
+          pointer-events:none;width:min(580px,88vw)}
   .toast{background:var(--bg0);border:1px solid var(--line2);border-left:3px solid var(--dim);
-         padding:9px 13px;font-size:11.5px;max-width:320px;letter-spacing:.3px}
-  .toast.gold{border-color:var(--amber);border-left-color:var(--amber);color:var(--amber)}
-  .toast.out{opacity:0;transform:translateX(24px);transition:all .35s}
+         padding:11px 18px;font-size:12.5px;min-width:300px;text-align:center;letter-spacing:.4px;
+         box-shadow:0 8px 24px rgba(0,0,0,.55),0 0 0 1px var(--bg0)}
+  .toast.gold{border-color:var(--amber);border-left-color:var(--amber);color:var(--amber);
+              box-shadow:0 8px 24px rgba(0,0,0,.55),0 0 18px rgba(240,180,80,.28)}
+  .toast.out{opacity:0;transform:translateY(14px);transition:all .4s}
 
   .pop{position:fixed;color:var(--amber);font-weight:700;font-size:15px;pointer-events:none;
        transition:all .85s cubic-bezier(.2,.7,.3,1);z-index:25}
@@ -342,7 +361,7 @@
     <div id="tabs">
       <button data-t="blds" class="on">Machinery</button>
       <button data-t="tree">Research</button>
-      <button data-t="achs">Unlocks</button>
+      <button data-t="achs">Achievements</button>
       <button data-t="mines">Mines</button>
     </div>
     <div id="tab-blds">
@@ -361,7 +380,10 @@
       <div class="chips" id="tree"></div>
     </div>
     <div id="tab-achs" style="display:none">
-      <div id="achPages"></div>
+      <div id="achHead">
+        <div id="achWord">ACHIEVEMENTS</div>
+        <div id="achBoostT">total boost ×1.000</div>
+      </div>
       <div id="achs"></div>
     </div>
     <div id="tab-mines" style="display:none"></div>
@@ -600,6 +622,7 @@ function num(v){ return BN.of(v); }
 
 /* ================= GAME STATE ================= */
 const S={
+  autoClick:false,
   ores:num(0),
   total:num(0),
   clicks:0,
@@ -621,7 +644,7 @@ const S={
   autobuy:true,
   frenzyUntil:0,
   seed:0,              // hidden world seed — drives all procedural generation
-  b:{}, up:new Set(), ach:new Set(),
+  b:{}, up:new Set(), ach:new Set(), seen:new Set(),
 };
 const PERKS=[
   {id:'p1', at:50,  name:'Foreman',        desc:'auto-buys cheapest machinery'},
@@ -640,7 +663,7 @@ function coreMult(){
 function coreLayers(){ return S.cores>1 ? Math.min(45, Math.floor(Math.log10(S.cores)/6.5)) : 0; }
 function effMult(){
   const t=BN.tetr(S.tetrN+coreLayers());   // research towers + insane-core layers stack
-  return S.mult.mul(coreMult()).mul(frenzyMult()).mul(resCache.allMul).mul(t);
+  return S.mult.mul(coreMult()).mul(frenzyMult()).mul(resCache.allMul).mul(num(achBoost())).mul(t);
 }
 let _cpsCache=null;
 function baseCPS(){
@@ -751,7 +774,8 @@ function tapsPerSec(now){
 }
 /* total income/sec right now: auto + what your recent tapping actually yields */
 function liveOps(now){
-  return gainAuto().plus(gainPerClick().mul(tapsPerSec(now)));
+  const tps=tapsPerSec(now)+(S.autoClick?12:0);
+  return gainAuto().plus(gainPerClick().mul(num(tps)));
 }
 function paybackStr(b,cost){
   // payback vs your REAL total income — auto + current tapping pace combined
@@ -776,10 +800,10 @@ function paybackStr(b,cost){
 }
 
 /* ============ RESEARCH — 13 milestones + 10 families, all hand-written ============ */
-const RES_RAW={"milestones":[{"id":"m1","name":"Calloused Grip","desc":"clicks x3","cost":500,"eff":{"k":"clickMul","v":3}},{"id":"m2","name":"Tendons Of Iron","desc":"clicks ^1.5","cost":50000,"eff":{"k":"clickPow","v":1.5}},{"id":"m3","name":"First Refinery","desc":"ALL gains x2","cost":200000,"eff":{"k":"allMul","v":2}},{"id":"m4","name":"Nerve Loop","desc":"clicks +1% of auto/s","cost":2000000,"eff":{"k":"cpsPct","v":0.01}},{"id":"m5","name":"Overclocked Loop","desc":"clicks +4% of auto/s","cost":500000000,"eff":{"k":"cpsPct","v":0.04}},{"id":"m6","name":"Forge Paradox","desc":"ALL gains ^1.2","cost":10000000000,"eff":{"k":"allPow","v":1.2}},{"id":"m7","name":"Thousandfold Cascade","desc":"ALL gains x1e3","cost":1e+30,"eff":{"k":"allMul","v":1000}},{"id":"m8","name":"Tempered Ambitions","desc":"ALL gains ^1.15","cost":1e+80,"eff":{"k":"allPow","v":1.15}},{"id":"m9","name":"First Tower","desc":"ALL gains x10^^5","cost":"E400","eff":{"k":"allTetr","v":5}},{"id":"m10","name":"Tower Cascade","desc":"ALL gains x10^^8, stacks","cost":"TETR4","eff":{"k":"allTetr","v":8}},{"id":"m11","name":"Skypiercer","desc":"ALL gains x10^^25, stacks","cost":"TETR12","eff":{"k":"allTetr","v":25}},{"id":"m12","name":"Beyond","desc":"ALL gains x10^^315 — max the system","cost":"TETR35","eff":{"k":"allTetr","v":315}},{"id":"m13","name":"Seismic Sense","desc":"golden voxels linger 4s longer","cost":10000,"eff":{"k":"goldenLinger"}}],"families":[{"id":"grip","name":"Pickhead","blurb":"clicks x2 each","start":1000,"growth":35,"eff":{"k":"clickMul","v":2},"nodes":[["Wooden Pick","splinters on the third swing"],["Stone Pick","cobbles lashed to a handle"],["Copper Pick","soft but eager"],["Bronze Pick","the first pick that sings"],["Iron Pick","honest weight, honest ore"],["Steel Pick","tempered, trustworthy"],["Cold Iron Pick","bites through frozen ground"],["Blue Steel Pick","the sheen that means business"],["Damascus Pick","layered like the strata"],["Titanium Pick","light as a lie, hard as truth"],["Cobalt Pick","blue-edged and hungry"],["Tungsten Pick","refuses to dull"],["Carbide Tip","the edge that outlives the handle"],["Diamond Tip","cuts voxel from voxel"],["Graphene Edge","one atom of blade, all business"],["Obsidian Edge","volcanic glass, surgical swing"],["Laser Tip","the swing that arrives as light"],["Plasma Edge","the seam melts before the pick lands"],["Ion Edge","charged atoms do the cutting"],["Positron Tip","the antimatter swing"],["Neutronium Edge","degenerate matter, degenerate speed"],["Singularity Tip","the swing pulls ore inward"],["Gravity Tip","each blow lands with a hill's weight"],["Temporal Tip","the ore was mined before you swung"],["Quantum Tip","every swing mines all possible seams"],["Tachyon Edge","the pick strikes first"],["Chrono Edge","the swing repeats itself"],["Phase Tip","the pick skips the middle of the swing"],["Nether Edge","mines the voxels that aren't there"],["Void Tip","the swing that un-places stone"],["Prismatic Tip","one swing, every color of ore"],["Harmonic Tip","the seam resonates and surrenders"],["Resonance Edge","the voxels shake themselves loose"],["Kinetic Amplifier","the follow-through doubled"],["Momentum Core","a swing that never fully stops"],["Inertia Damper","recoil deleted"],["Perpetual Swing","the pick keeps its own promise"],["Autonomous Swing","the pick swings, you supervise"],["Recursive Swing","each swing improves the last"],["Fractal Edge","every chip has smaller chips"],["Axiomatic Tip","the pick proves ore exists, then takes it"],["The Final Pick","there is nothing it cannot open"]]},{"id":"dup","name":"Seams","blurb":"ALL gains x2 each","start":500000,"growth":900000,"eff":{"k":"allMul","v":2},"nodes":[["Twin Vein","the seam forks, both forks pay"],["Split Face","the wall breaks into two walls"],["Second Face","mine the front and the back at once"],["Mirror Seam","an identical vein, reflected"],["Echo Vein","whatever you mine, it mines again"],["Forked Drift","one tunnel, two destinations"],["Branched Drift","the tunnel learns to tree"],["Parallel Shafts","side by side, both rich"],["Twin Shafts","one headframe, two holes down"],["Double Load","each cart takes two carts' worth"],["Twin Skips","the hoist lifts twice per cycle"],["Paired Cages","up and down at the same time"],["Split Ore Pass","the rock divides on the way down"],["Twin Crushers","two jaws, one appetite"],["Double Screen Deck","sifts twice in one pass"],["Dual Mills","the ore grinds itself twice"],["Twin Leach Lines","the chemistry runs in parallel"],["Paired Thickeners","settling, squared"],["Double Furnace","two hearts of heat"],["Twin Converters","the metal blows twice"],["Paired Anodes","plating on both sides"],["Double Casting Line","ingots in stereo"],["Twin Headframes","the skyline doubles"],["Dual Winders","the drum pays out twice"],["Split Level","one floor becomes two"],["Stacked Stopes","rooms above rooms"],["Benched Cut","the seam steps down and doubles"],["Room And Pillar Twice","the pillars mine themselves"],["Longwall Return","the shear comes back for seconds"],["Retreat Mining","leaves nothing, twice"],["Repeat Blast","the echo of the shot also breaks rock"],["Double Ring","drill the pattern, then its twin"],["Twin Jumbos","two booms, one face"],["Dual LHD","scoop and haul, mirrored"],["Paired Conveyors","the belt runs beside its ghost"],["Double Decline","two ramps into the deep"],["Spiral Twin","the decline coils around itself"],["Helix Shaft","the corkscrew of shafts"],["Bifurcated Fault","the crack splits the mountain"],["Multiplying Dike","the seam breeds as it runs"],["Vein Colony","the lode learns to reproduce"],["The Splitting Seam","it divides, and divides, and pays"]]},{"id":"nerve","name":"Swing","blurb":"clicks x3 each","start":10000000,"growth":3200,"eff":{"k":"clickMul","v":3},"nodes":[["Loose Wrists","let the pick do the falling"],["Steady Rhythm","tick, tock, ore"],["Metronome Habit","swing on the beat, always the beat"],["Double Time","two beats where one was"],["Off-Hand Swing","the weak arm earns its keep"],["Ambidextrous Dig","either hand, either seam"],["Alternate Grip","flip the pick mid-swing"],["Rolling Wrist","the spin carries the edge"],["Shoulder Drop","put the whole frame into it"],["Hip Turn","the coil and release"],["Weight Shift","back foot to front foot, every blow"],["Falling Pick","gravity as a coworker"],["Chained Blows","each swing loads the next"],["Flow Cadence","no gap between strikes"],["Piston Arms","up-down, up-down, merciless"],["Steam Tempo","the rhythm of the old engines"],["Pneumatic Tempo","compressed air sets the beat"],[" Hydraulic Tempo","oil moves faster than muscle"],["Electric Tempo","the hum synchronizes the arms"],["Motor Reflex","the swing fires before the thought"],["Servo Reflex","the assist finishes the motion"],["Predictive Swing","the pick aims at next swing's ore"],["Pre-Motion","the ore breaks before contact"],["Zero-Windup","no backswing at all"],["Instant Strike","the swing is all arrival"],["Continuous Strike","a blur that never rebuilds"],["Cascade Strike","hits arrive in bunches"],["Barrage","a wall of swings"],["Storm Cadence","swinging like weather"],["Tempest Tempo","the forecast is ore"],["Lightning Cadence","the strike precedes the thunder"],["Photon Cadence","swings at the speed of light"],["Tachyon Cadence","the swing finishes before starting"],["Instantaneous","no interval remains to remove"],["Time-Sliced Swing","each second holds more swings"],["Dilated Tempo","bend the shift, keep the swings"],["Frozen Instant","one moment, many strikes"],["Echo Strike","the swing and its copy land together"],["Phantom Swing","an extra arm nobody can see"],["Mirrored Strike","the reflection swings too"],["Recursive Strike","the swing calls itself"],["The Infinite Swing","it was never going to stop"]]},{"id":"pay","name":"Logistics","blurb":"ALL gains x2.5 each","start":1000000000000,"growth":300000000000000,"eff":{"k":"allMul","v":2.5},"nodes":[["Second Cart","the first of many"],["Cart Train","carts coupled nose to tail"],["Double Track","passing loops on the mainline"],["Siding","park the empties, take the loads"],["Ore Chute Network","gravity does the hauling"],["Bin And Feed","the ore queues politely"],["Loadout Silo","fill a train in one breath"],["Tipple Upgrade","dump faster than they roll in"],["Rail Spur","the mainline comes to you"],["Double Header","two locomotives, one consist"],["Garratt Loco","articulated, insatiable"],["Ore Jumbo","a hundred tons per car"],["Rotary Dumper","turns the car inside out"],["Bottom Dump","the floor opens, the ore leaves"],["Continuous Conveyor","the belt never sleeps"],["Overland Belt","kilometers of moving floor"],["Cable Belt","the trough rides a rope"],["Pipe Conveyor","the belt curls into a tube"],["Sandwich Belt","ore hugged between two belts"],["High Angle Belt","climbs where roads fear"],["Skip Hoist","the shaft becomes a conveyor"],["Blind Shaft Skip","skip loading on the fly"],["Counterweight Hoist","the full skip lifts the empty"],["Koepe Upgrade","the wheel grips harder"],["Twin Decline","two ramps, twice the trucks"],["Fleet Dispatch","every hauler, perfectly tasked"],["Route Optimization","no wheel turns empty"],["Cycle Timing","load-haul-dump becomes one motion"],["Surge Bin","buffer against hesitation"],["Blending Stockpile","the grades mix themselves"],["Reclaim Tunnel","the pile feeds the plant from below"],["Stacker Boom","piles grow in neat ridges"],["Shiploader","the hold swallows the mountain"],["Ore Loader","the belt meets the hull"],["Slurry Pipeline","ore flows like water"],["Tailings Return","the waste line hauls profit back"],["Backhaul Freight","nothing travels empty"],["Containerized Ore","the box is the ore car"],["Vactrain Haul","ore at near-sonic speed"],["Orbital Lift Line","the bucket goes to orbit"],["Elevator To Nowhere Down","there is always more down"],["The Great Haul","the mountain moves itself"]]},{"id":"feed","name":"Echo","blurb":"clicks +0.5% of auto/s each","start":200000,"growth":12,"eff":{"k":"cpsPct","v":0.005},"nodes":[["First Echo","the pit answers the pick"],["Wall Echo","the far drift reports back"],["Return Wave","what goes down, comes up paid"],["Seismic Return","the shot's echo loosens more"],["Standing Resonance","the drift hums at swing speed"],["Sympathetic Fracture","loose voxels join the rhythm"],["Harmonic Digging","tune the pick to the seam"],["Overtone Digging","the hidden frequencies break rock"],["Beat Frequency","two swings, one wobble, more ore"],["Resonant Cavity","the stope amplifies the blow"],["Echo Chamber Drift","a tunnel built to answer back"],["Reverberant Face","every strike lands thrice"],["Feedback Loop","each swing primes the next"],["Positive Feedback","the loop only gets louder"],["Runaway Resonance","the mountain shakes itself apart"],["Constructive Interference","waves that agree, destroy"],["Phase Alignment","all blows land as one blow"],["Coherent Digging","the swings march in step"],["Amplified Return","the echo comes back heavier"],["Loaded Echo","the answer carries ore"],["Seismic Lens","focus the rumble onto the seam"],["Acoustic Mirror","aim the noise where it pays"],["Parabolic Face","the wall concentrates the blow"],["Sound Board Drift","the tunnel is an instrument"],["Grand Echo","the whole mine answers"],["Delayed Return","yesterday's swing pays today"],["Persistent Echo","the seam never stops replying"],["Standing Wave Dig","the ore rides the crests"],["Node Mining","dig precisely where the wave stills"],["Antenna Drift","the tunnel listens for ore"],["Receiver Array","every echo, harvested"],["Transducer Face","the wall converts blow to break"],["Coupled Resonators","seams that ring together"],["Chorus of Seams","all the veins sing at once"],["Symphonic Dig","the mine plays, the ore falls"],["Polyphonic Strike","chords of fracture"],["Overtone Cascade","the harmonics do the mining"],["Infrasonic Return","too low to hear, deep enough to crack"],["Ultrasound Dig","cuts along invisible seams"],["Resonant Cascade","echoes breeding echoes"],["Self-Amplifying Seam","the vein wants to be mined"],["The Eternal Echo","the first swing is still ringing"]]},{"id":"adren","name":"Overdrive","blurb":"frenzy +1.5s each","start":5000000,"growth":7,"eff":{"k":"frenzyAdd","v":1.5},"nodes":[["Deep Breath","one lungful before the rush"],["Second Wind","the lie that comes true"],["Adrenal Gland","the body coins its own currency"],["Fight Response","run at the seam, not from it"],["Tunnel Focus","the world narrows to the face"],["Red Mist","the shift becomes a smear of ore"],["Iron Lungs","breathe the dust, exhale freight"],["Ore Fever","the shake that finds seams"],["Pick Fury","the handle complains"],["Berserk Cadence","counting is for later"],["Frenzy Primer","a taste of the golden state"],["Golden Habit","the body learns the surge"],["Surge Timing","open the vein at the peak"],["Cluster Surge","stack the rushes back to back"],["Chain Frenzy","one rush pulls the next"],["Cascade Overdrive","the peak keeps peaking"],["Sustained Burn","the furnace holds its draw"],["Long Combustion","a slow furnace is a rich furnace"],["Afterburner","when the frenzy should end, don't"],["Overdriven Hoist","the drum screams, delivers"],["Redlined Crusher","past the gauge, still fine"],["Runaway Mill","the bearings write poetry"],["Overclocked Plant","the schedule is a rumor"],["Push The Faces","all stopes at once"],["All Shifts On Deck","nobody sleeps till the seam does"],["Double Shift Iron","the machines volunteer"],["Hot Pass","one more cut before cooldown"],["Final Pass","the deepest cut of the night"],["Overtime Vein","the seam agrees to stay late"],["Bonus Stope","the rush finds a bonus room"],["Ore Torrent","the bin cannot keep up"],["Flood Loading","the belt runs white with rock"],["Peak Draw","the grid begs for mercy"],["Maximum Throughput","the plant becomes a waterfall"],["Terminal Velocity Dig","the pick approaches light-speed"],["Escape Velocity Rush","the ore leaves the gravity well"],["Hypersonic Swing","the crack arrives before the sound"],["Relativistic Rush","time dilates, ore doesn't"],["Chronic Overdrive","the redline becomes home"],["Permanent Surge","the frenzy forgets to end"],["The Endless Rush","there was never a baseline"],["Ultimate Overdrive","the mine cannot be turned off"]]},{"id":"luck","name":"Fortune","blurb":"golden payouts x1.15 each","start":100000000,"growth":5,"eff":{"k":"goldMul","v":1.15},"nodes":[["Lucky Pebble","kept in the pocket since day one"],["Two-Way Pick","heads it's ore, tails it's ore"],["Gut Feeling","the drift that felt rich, was"],["Vein Sense","the itch before the strike"],["Ore Nose","you can smell the high grade"],["Glint Sight","catch the sparkle nobody else does"],["Lucky Drill Hole","the first bore hits every time"],["Rich First Sample","the assay makes you smile"],["Beginner's Luck","permanent, if you never stop beginning"],["Loaded Face","the wall is all pay"],["High-Grade Streak","the good rock keeps coming"],["Bonanza Entry","you walked in on a legend"],["Pocket Finder","the small rich rooms love you"],["Vug Luck","the crystal pockets open for you"],["Mother Lode Scent","the big one leaves a trail"],["Comstock Instinct","the silver whispers your name"],["Golden Ratio Cut","the seam splits exactly in your favor"],["Fortunate Fracture","the rock breaks along the pay"],["Lucky Blasting Round","the shot lands the whole face"],["Perfect Muck Pile","shoveled in one scoop"],["Assay Charmed","the numbers always round up"],["Mill Favorably","the plant loves your ore"],["Smelter Bonus","the matte runs rich"],["Refinery Gift","the last pour is the purest"],["Cache Instinct","you dig where the old-timers hid theirs"],["Relic Find","someone's stash, now yours"],["Fossil Bonus","the past pays tribute"],["Gem Gravity","the gems roll toward you"],["Nugget Magnet","the coarse gold leaps"],["Diamond Luck","the blue ground is bluer"],["Komatsu Karma","the big shovel never breaks down"],["Spare Part Serendipity","the bin always has one more"],["Fourth Lift Fortune","the level nobody wanted, you wanted"],["Deep Riches","the bottom of the mine is the top"],["Blind Lead","a shortcut straight to pay"],["Hidden Winze","a ladder down into luck"],["Lucky Collapse","the cave-in reveals a vault"],["Fortune's Fault","the crack that only pays"],["Jackpot Face","the wall is solid metal"],["The Midas Stratum","everything you touch grades high"],["Gilded Drift","even the waste rock shines"],["Fortune Favors The Deep","the bottom level pays double"]]},{"id":"mem","name":"Night Shift","blurb":"offline cap +30min each","start":1000000000,"growth":60,"eff":{"k":"offCap","v":1800},"nodes":[["Night Watchman","rounds at two, bucket at dawn"],["Lamp Rounds","the headlamps check the drifts"],["Moonlight Shift","the pit works by borrowed light"],["Graveyard Crew","the deepest shift, quietest pay"],["Owl Shift","the hoots count the carts"],["Ghost Shift","the machinery runs warm and alone"],["Skeleton Crew","just enough hands to keep digging"],["Sleepwalking Digger","the body knows the seam"],["Dream Drift","the mine tunnels through the night"],["Night Vision Lamps","the dark is a rumor"],["Midnight Face","the stope never sleeps"],["Small Hours Dig","the quiet hours break the most rock"],["Witching Hour Seam","the vein glows after midnight"],["Moonthaw Digging","the frost gives up at 3 a.m."],["Twilight Haul","the first belt starts before dawn"],["Pre-Dawn Blast","the mountain wakes to gunfire"],["Dawn Cleanup","the day shift inherits muck and ore"],["Second Breath","the mine exhales at sunrise"],["Night Owl Payroll","the nocturnal earn their bonus"],["Lucid Shift","dream the drift, wake in it"],["Split Shift","half the night, twice the ore"],["Full Night Cycle","the whole dark, productive"],["Deep Night Cycle","the hours nobody claims"],["Sleep Debt Repaid","the mine works while you don't"],["Power Nap Protocol","twenty minutes, full bucket"],["Rested Wrists","the swing comes back stronger"],["Long Night","the shift that never quite ends"],["Double Dark","two nights in one"],["Hibernation Vein","the seam winters over, rich in spring"],["Torpor Shift","the mine sips, never stops"],["Suspended Animation Seam","freeze the face, keep the pay"],["Time Capsule Stope","bury the tools, dig them out richer"],["Sleeper Vein","it waited a century, it can wait for you"],["Slow Clock Drift","the mine's clock runs deeper"],["Standing Order","keep digging until I return"],["Autonomous Night","the machines hold the vigil"],["Unattended Mill","the plant runs itself til morning"],["Phantom Operator","a ghost signs the shift book"],["Night Self","the other you keeps the picks sharp"],["The 4 A.M. Bonanza","the hour of secret riches"],["Morning Riches","wake to a full bin"],["The Mine Remembers","it dug all night, in your name"]]},{"id":"hag","name":"Prospecting","blurb":"machinery costs x0.985 each","start":1000000,"growth":2500,"eff":{"k":"machDisc","v":0.985},"nodes":[["Shallow Prospecting","the easy ore is still ore"],["Pan And Hope","the classic method, upgraded"],["Loam Testing","read the dirt like a ledger"],["Float Tracing","follow the stones upstream"],["Outcrop Reading","the surface tells where to dig"],["Gossan Sense","the rust cap marks the prize"],["Geological Map","the mountain, annotated"],["Claim Staking","the paperwork that finds seams"],["Trench Sampling","cheap holes, honest answers"],["Pitting Spree","many small digs, one big hunch"],["Geochem Survey","the soil confesses its grades"],["Magnetics Pass","the needle points to pay"],["Induced Polarization","the ground holds its charge, and its secrets"],["EM Conduct","the conductivity gives it away"],["Gravity Gradiometer","dense ore announces its weight"],["Radiometrics","the seam glows on the map"],["Hyperspectral Scan","each mineral wears its color"],["LiDAR Face Map","every wall, measured"],["Core Logging","the truth in cylinders, catalogued"],["Cuttings Analyst","read the bore dust like tea leaves"],["Assay On Site","no waiting for the lab"],["Portable XRF","grade the rock in your hand"],["Borehole Televiewer","a camera ride down the hole"],["Crosshole Tomography","see between the holes"],["Seismic Reflection","echoes draw the deep seams"],["Ground Radar","the drift's x-ray"],["Muon Tomography","the mountain photographs itself"],["Neutron Probe","the ore can't hide its water"],["Survey Drone Fleet","the pit mapped every sunrise"],["Prospect AI","the hunch, industrialized"],["Ore Body Model","the deposit as a sculpture of numbers"],["Block Model Refinement","smaller blocks, sharper prices"],["Dilution Control","waste stays out of the truck"],["Grade Control","every load, on target"],["Selective Mining","cut only what pays"],["High-Grade First","the rich faces jump the queue"],["Negotiated Claim","the landowner liked your maps"],["Joint Venture Terms","their money, your picks"],["Royalty Swap","a cut of tomorrow for a discount today"],["Equipment Syndicate","the fleet costs less in bulk"],["Direct-From-Works Deal","no middleman, no markup"],["The Perfect Prospectus","the mountain reads it and cooperates"]]},{"id":"sch","name":"Surveying","blurb":"research costs x0.99 each","start":10000000000,"growth":6000000,"eff":{"k":"resDisc","v":0.99},"nodes":[["First Field Notes","pencil maps of the first drift"],["Level And Staff","the mine, measured flat"],["Theodolite","angles that settle arguments"],["Plumb Line Doctrine","straight down, no debate"],["Transit Surveys","every drift, triangulated"],["Stope Markup","the walls get numbers"],["Closure Checks","the loops must agree with themselves"],["Traverse Network","the mine's skeleton, mapped"],["Baseline Control","one long line to trust"],["Benchmark Grid","heights, everywhere, forever"],["Tacheometry","distance from stadia hairs"],["Chain And Tape","the old way, still exact"],["Gyro Theodolite","north, found underground"],["Inertial Survey Unit","the drift maps itself while walking"],["Total Station","one gun, every measurement"],["Laser Plummet","the shaft hangs true"],["Scanner Point Cloud","a million points per minute"],["Photogrammetry Rig","photos become geometry"],["Drift Profile Scan","the tunnel's exact hollow"],["Volume Survey","the stope's appetite, measured"],["Dilution Mapping","the waste line, drawn hard"],["Reconciliation Model","plan meets reality, reconciled"],["Geologic Database","every log since day one"],["Section Interpretation","the seams drawn through solid rock"],["Structural Model","the faults, predicted"],["Resource Estimate","the ore, counted before mining"],["Reserve Statement","the ore, bankable"],["Sensitivity Analysis","the estimate, stress-tested"],["Block Model Audit","the numbers, cross-examined"],["Grade Shell Design","the cutoff, optimized"],["Mine Plan Iteration","the sequence, refined again"],["Sequence Optimization","the order that pays most"],["Stability Mapping","the ground grades itself"],["Hazard Register","the mine's fears, itemized"],["Ventilation Network Solve","the wind's route, computed"],["Dewatering Model","the water, outmaneuvered"],["Backfill Schedule","the paste, precisely timed"],["Equipment Simulation","the fleet, rehearsed in silicon"],["Digital Twin Calibration","the mirror tuned to the mine"],["Full Spectrum Survey","nothing underground is unknown"],["The Perfect Map","the mine and the model agree"],["Omniscient Survey","the mountain shows you everything"]]}]};
+const RES_RAW={"milestones":[{"id":"m1","name":"Calloused Grip","desc":"clicks x3","cost":500,"eff":{"k":"clickMul","v":3}},{"id":"m2","name":"Tendons Of Iron","desc":"clicks ^1.5","cost":50000,"eff":{"k":"clickPow","v":1.5}},{"id":"m3","name":"First Refinery","desc":"ALL gains x2","cost":200000,"eff":{"k":"allMul","v":2}},{"id":"m4","name":"Nerve Loop","desc":"clicks +1% of auto/s","cost":2000000,"eff":{"k":"cpsPct","v":0.01}},{"id":"m5","name":"Overclocked Loop","desc":"clicks +4% of auto/s","cost":500000000,"eff":{"k":"cpsPct","v":0.04}},{"id":"m6","name":"Forge Paradox","desc":"ALL gains ^1.2","cost":10000000000,"eff":{"k":"allPow","v":1.2}},{"id":"m7","name":"Thousandfold Cascade","desc":"ALL gains x1e3","cost":1e+30,"eff":{"k":"allMul","v":1000}},{"id":"m8","name":"Tempered Ambitions","desc":"ALL gains ^1.15","cost":1e+80,"eff":{"k":"allPow","v":1.15}},{"id":"m9","name":"First Tower","desc":"ALL gains x10^^5","cost":"E400","eff":{"k":"allTetr","v":5}},{"id":"m10","name":"Tower Cascade","desc":"ALL gains x10^^8, stacks","cost":"TETR4","eff":{"k":"allTetr","v":8}},{"id":"m11","name":"Skypiercer","desc":"ALL gains x10^^25, stacks","cost":"TETR12","eff":{"k":"allTetr","v":25}},{"id":"m12","name":"Beyond","desc":"ALL gains x10^^315 — max the system","cost":"TETR35","eff":{"k":"allTetr","v":315}},{"id":"m13","name":"Seismic Sense","desc":"golden voxels linger 4s longer","cost":10000,"eff":{"k":"goldenLinger"}},{"id":"m14","name":"Iron Assistant","desc":"auto-taps the seam 12x/s forever","cost":2000,"eff":{"k":"autoClick"}}],"families":[{"id":"grip","name":"Pickhead","blurb":"clicks x2 each","start":1000,"growth":35,"eff":{"k":"clickMul","v":2},"nodes":[["Wooden Pick","splinters on the third swing"],["Stone Pick","cobbles lashed to a handle"],["Copper Pick","soft but eager"],["Bronze Pick","the first pick that sings"],["Iron Pick","honest weight, honest ore"],["Steel Pick","tempered, trustworthy"],["Cold Iron Pick","bites through frozen ground"],["Blue Steel Pick","the sheen that means business"],["Damascus Pick","layered like the strata"],["Titanium Pick","light as a lie, hard as truth"],["Cobalt Pick","blue-edged and hungry"],["Tungsten Pick","refuses to dull"],["Carbide Tip","the edge that outlives the handle"],["Diamond Tip","cuts voxel from voxel"],["Graphene Edge","one atom of blade, all business"],["Obsidian Edge","volcanic glass, surgical swing"],["Laser Tip","the swing that arrives as light"],["Plasma Edge","the seam melts before the pick lands"],["Ion Edge","charged atoms do the cutting"],["Positron Tip","the antimatter swing"],["Neutronium Edge","degenerate matter, degenerate speed"],["Singularity Tip","the swing pulls ore inward"],["Gravity Tip","each blow lands with a hill's weight"],["Temporal Tip","the ore was mined before you swung"],["Quantum Tip","every swing mines all possible seams"],["Tachyon Edge","the pick strikes first"],["Chrono Edge","the swing repeats itself"],["Phase Tip","the pick skips the middle of the swing"],["Nether Edge","mines the voxels that aren't there"],["Void Tip","the swing that un-places stone"],["Prismatic Tip","one swing, every color of ore"],["Harmonic Tip","the seam resonates and surrenders"],["Resonance Edge","the voxels shake themselves loose"],["Kinetic Amplifier","the follow-through doubled"],["Momentum Core","a swing that never fully stops"],["Inertia Damper","recoil deleted"],["Perpetual Swing","the pick keeps its own promise"],["Autonomous Swing","the pick swings, you supervise"],["Recursive Swing","each swing improves the last"],["Fractal Edge","every chip has smaller chips"],["Axiomatic Tip","the pick proves ore exists, then takes it"],["The Final Pick","there is nothing it cannot open"]]},{"id":"dup","name":"Seams","blurb":"ALL gains x2 each","start":500000,"growth":900000,"eff":{"k":"allMul","v":2},"nodes":[["Twin Vein","the seam forks, both forks pay"],["Split Face","the wall breaks into two walls"],["Second Face","mine the front and the back at once"],["Mirror Seam","an identical vein, reflected"],["Echo Vein","whatever you mine, it mines again"],["Forked Drift","one tunnel, two destinations"],["Branched Drift","the tunnel learns to tree"],["Parallel Shafts","side by side, both rich"],["Twin Shafts","one headframe, two holes down"],["Double Load","each cart takes two carts' worth"],["Twin Skips","the hoist lifts twice per cycle"],["Paired Cages","up and down at the same time"],["Split Ore Pass","the rock divides on the way down"],["Twin Crushers","two jaws, one appetite"],["Double Screen Deck","sifts twice in one pass"],["Dual Mills","the ore grinds itself twice"],["Twin Leach Lines","the chemistry runs in parallel"],["Paired Thickeners","settling, squared"],["Double Furnace","two hearts of heat"],["Twin Converters","the metal blows twice"],["Paired Anodes","plating on both sides"],["Double Casting Line","ingots in stereo"],["Twin Headframes","the skyline doubles"],["Dual Winders","the drum pays out twice"],["Split Level","one floor becomes two"],["Stacked Stopes","rooms above rooms"],["Benched Cut","the seam steps down and doubles"],["Room And Pillar Twice","the pillars mine themselves"],["Longwall Return","the shear comes back for seconds"],["Retreat Mining","leaves nothing, twice"],["Repeat Blast","the echo of the shot also breaks rock"],["Double Ring","drill the pattern, then its twin"],["Twin Jumbos","two booms, one face"],["Dual LHD","scoop and haul, mirrored"],["Paired Conveyors","the belt runs beside its ghost"],["Double Decline","two ramps into the deep"],["Spiral Twin","the decline coils around itself"],["Helix Shaft","the corkscrew of shafts"],["Bifurcated Fault","the crack splits the mountain"],["Multiplying Dike","the seam breeds as it runs"],["Vein Colony","the lode learns to reproduce"],["The Splitting Seam","it divides, and divides, and pays"]]},{"id":"nerve","name":"Swing","blurb":"clicks x3 each","start":10000000,"growth":3200,"eff":{"k":"clickMul","v":3},"nodes":[["Loose Wrists","let the pick do the falling"],["Steady Rhythm","tick, tock, ore"],["Metronome Habit","swing on the beat, always the beat"],["Double Time","two beats where one was"],["Off-Hand Swing","the weak arm earns its keep"],["Ambidextrous Dig","either hand, either seam"],["Alternate Grip","flip the pick mid-swing"],["Rolling Wrist","the spin carries the edge"],["Shoulder Drop","put the whole frame into it"],["Hip Turn","the coil and release"],["Weight Shift","back foot to front foot, every blow"],["Falling Pick","gravity as a coworker"],["Chained Blows","each swing loads the next"],["Flow Cadence","no gap between strikes"],["Piston Arms","up-down, up-down, merciless"],["Steam Tempo","the rhythm of the old engines"],["Pneumatic Tempo","compressed air sets the beat"],[" Hydraulic Tempo","oil moves faster than muscle"],["Electric Tempo","the hum synchronizes the arms"],["Motor Reflex","the swing fires before the thought"],["Servo Reflex","the assist finishes the motion"],["Predictive Swing","the pick aims at next swing's ore"],["Pre-Motion","the ore breaks before contact"],["Zero-Windup","no backswing at all"],["Instant Strike","the swing is all arrival"],["Continuous Strike","a blur that never rebuilds"],["Cascade Strike","hits arrive in bunches"],["Barrage","a wall of swings"],["Storm Cadence","swinging like weather"],["Tempest Tempo","the forecast is ore"],["Lightning Cadence","the strike precedes the thunder"],["Photon Cadence","swings at the speed of light"],["Tachyon Cadence","the swing finishes before starting"],["Instantaneous","no interval remains to remove"],["Time-Sliced Swing","each second holds more swings"],["Dilated Tempo","bend the shift, keep the swings"],["Frozen Instant","one moment, many strikes"],["Echo Strike","the swing and its copy land together"],["Phantom Swing","an extra arm nobody can see"],["Mirrored Strike","the reflection swings too"],["Recursive Strike","the swing calls itself"],["The Infinite Swing","it was never going to stop"]]},{"id":"pay","name":"Logistics","blurb":"ALL gains x2.5 each","start":1000000000000,"growth":300000000000000,"eff":{"k":"allMul","v":2.5},"nodes":[["Second Cart","the first of many"],["Cart Train","carts coupled nose to tail"],["Double Track","passing loops on the mainline"],["Siding","park the empties, take the loads"],["Ore Chute Network","gravity does the hauling"],["Bin And Feed","the ore queues politely"],["Loadout Silo","fill a train in one breath"],["Tipple Upgrade","dump faster than they roll in"],["Rail Spur","the mainline comes to you"],["Double Header","two locomotives, one consist"],["Garratt Loco","articulated, insatiable"],["Ore Jumbo","a hundred tons per car"],["Rotary Dumper","turns the car inside out"],["Bottom Dump","the floor opens, the ore leaves"],["Continuous Conveyor","the belt never sleeps"],["Overland Belt","kilometers of moving floor"],["Cable Belt","the trough rides a rope"],["Pipe Conveyor","the belt curls into a tube"],["Sandwich Belt","ore hugged between two belts"],["High Angle Belt","climbs where roads fear"],["Skip Hoist","the shaft becomes a conveyor"],["Blind Shaft Skip","skip loading on the fly"],["Counterweight Hoist","the full skip lifts the empty"],["Koepe Upgrade","the wheel grips harder"],["Twin Decline","two ramps, twice the trucks"],["Fleet Dispatch","every hauler, perfectly tasked"],["Route Optimization","no wheel turns empty"],["Cycle Timing","load-haul-dump becomes one motion"],["Surge Bin","buffer against hesitation"],["Blending Stockpile","the grades mix themselves"],["Reclaim Tunnel","the pile feeds the plant from below"],["Stacker Boom","piles grow in neat ridges"],["Shiploader","the hold swallows the mountain"],["Ore Loader","the belt meets the hull"],["Slurry Pipeline","ore flows like water"],["Tailings Return","the waste line hauls profit back"],["Backhaul Freight","nothing travels empty"],["Containerized Ore","the box is the ore car"],["Vactrain Haul","ore at near-sonic speed"],["Orbital Lift Line","the bucket goes to orbit"],["Elevator To Nowhere Down","there is always more down"],["The Great Haul","the mountain moves itself"]]},{"id":"feed","name":"Echo","blurb":"clicks +0.5% of auto/s each","start":200000,"growth":12,"eff":{"k":"cpsPct","v":0.005},"nodes":[["First Echo","the pit answers the pick"],["Wall Echo","the far drift reports back"],["Return Wave","what goes down, comes up paid"],["Seismic Return","the shot's echo loosens more"],["Standing Resonance","the drift hums at swing speed"],["Sympathetic Fracture","loose voxels join the rhythm"],["Harmonic Digging","tune the pick to the seam"],["Overtone Digging","the hidden frequencies break rock"],["Beat Frequency","two swings, one wobble, more ore"],["Resonant Cavity","the stope amplifies the blow"],["Echo Chamber Drift","a tunnel built to answer back"],["Reverberant Face","every strike lands thrice"],["Feedback Loop","each swing primes the next"],["Positive Feedback","the loop only gets louder"],["Runaway Resonance","the mountain shakes itself apart"],["Constructive Interference","waves that agree, destroy"],["Phase Alignment","all blows land as one blow"],["Coherent Digging","the swings march in step"],["Amplified Return","the echo comes back heavier"],["Loaded Echo","the answer carries ore"],["Seismic Lens","focus the rumble onto the seam"],["Acoustic Mirror","aim the noise where it pays"],["Parabolic Face","the wall concentrates the blow"],["Sound Board Drift","the tunnel is an instrument"],["Grand Echo","the whole mine answers"],["Delayed Return","yesterday's swing pays today"],["Persistent Echo","the seam never stops replying"],["Standing Wave Dig","the ore rides the crests"],["Node Mining","dig precisely where the wave stills"],["Antenna Drift","the tunnel listens for ore"],["Receiver Array","every echo, harvested"],["Transducer Face","the wall converts blow to break"],["Coupled Resonators","seams that ring together"],["Chorus of Seams","all the veins sing at once"],["Symphonic Dig","the mine plays, the ore falls"],["Polyphonic Strike","chords of fracture"],["Overtone Cascade","the harmonics do the mining"],["Infrasonic Return","too low to hear, deep enough to crack"],["Ultrasound Dig","cuts along invisible seams"],["Resonant Cascade","echoes breeding echoes"],["Self-Amplifying Seam","the vein wants to be mined"],["The Eternal Echo","the first swing is still ringing"]]},{"id":"adren","name":"Overdrive","blurb":"frenzy +1.5s each","start":5000000,"growth":7,"eff":{"k":"frenzyAdd","v":1.5},"nodes":[["Deep Breath","one lungful before the rush"],["Second Wind","the lie that comes true"],["Adrenal Gland","the body coins its own currency"],["Fight Response","run at the seam, not from it"],["Tunnel Focus","the world narrows to the face"],["Red Mist","the shift becomes a smear of ore"],["Iron Lungs","breathe the dust, exhale freight"],["Ore Fever","the shake that finds seams"],["Pick Fury","the handle complains"],["Berserk Cadence","counting is for later"],["Frenzy Primer","a taste of the golden state"],["Golden Habit","the body learns the surge"],["Surge Timing","open the vein at the peak"],["Cluster Surge","stack the rushes back to back"],["Chain Frenzy","one rush pulls the next"],["Cascade Overdrive","the peak keeps peaking"],["Sustained Burn","the furnace holds its draw"],["Long Combustion","a slow furnace is a rich furnace"],["Afterburner","when the frenzy should end, don't"],["Overdriven Hoist","the drum screams, delivers"],["Redlined Crusher","past the gauge, still fine"],["Runaway Mill","the bearings write poetry"],["Overclocked Plant","the schedule is a rumor"],["Push The Faces","all stopes at once"],["All Shifts On Deck","nobody sleeps till the seam does"],["Double Shift Iron","the machines volunteer"],["Hot Pass","one more cut before cooldown"],["Final Pass","the deepest cut of the night"],["Overtime Vein","the seam agrees to stay late"],["Bonus Stope","the rush finds a bonus room"],["Ore Torrent","the bin cannot keep up"],["Flood Loading","the belt runs white with rock"],["Peak Draw","the grid begs for mercy"],["Maximum Throughput","the plant becomes a waterfall"],["Terminal Velocity Dig","the pick approaches light-speed"],["Escape Velocity Rush","the ore leaves the gravity well"],["Hypersonic Swing","the crack arrives before the sound"],["Relativistic Rush","time dilates, ore doesn't"],["Chronic Overdrive","the redline becomes home"],["Permanent Surge","the frenzy forgets to end"],["The Endless Rush","there was never a baseline"],["Ultimate Overdrive","the mine cannot be turned off"]]},{"id":"luck","name":"Fortune","blurb":"golden payouts x1.15 each","start":100000000,"growth":5,"eff":{"k":"goldMul","v":1.15},"nodes":[["Lucky Pebble","kept in the pocket since day one"],["Two-Way Pick","heads it's ore, tails it's ore"],["Gut Feeling","the drift that felt rich, was"],["Vein Sense","the itch before the strike"],["Ore Nose","you can smell the high grade"],["Glint Sight","catch the sparkle nobody else does"],["Lucky Drill Hole","the first bore hits every time"],["Rich First Sample","the assay makes you smile"],["Beginner's Luck","permanent, if you never stop beginning"],["Loaded Face","the wall is all pay"],["High-Grade Streak","the good rock keeps coming"],["Bonanza Entry","you walked in on a legend"],["Pocket Finder","the small rich rooms love you"],["Vug Luck","the crystal pockets open for you"],["Mother Lode Scent","the big one leaves a trail"],["Comstock Instinct","the silver whispers your name"],["Golden Ratio Cut","the seam splits exactly in your favor"],["Fortunate Fracture","the rock breaks along the pay"],["Lucky Blasting Round","the shot lands the whole face"],["Perfect Muck Pile","shoveled in one scoop"],["Assay Charmed","the numbers always round up"],["Mill Favorably","the plant loves your ore"],["Smelter Bonus","the matte runs rich"],["Refinery Gift","the last pour is the purest"],["Cache Instinct","you dig where the old-timers hid theirs"],["Relic Find","someone's stash, now yours"],["Fossil Bonus","the past pays tribute"],["Gem Gravity","the gems roll toward you"],["Nugget Magnet","the coarse gold leaps"],["Diamond Luck","the blue ground is bluer"],["Komatsu Karma","the big shovel never breaks down"],["Spare Part Serendipity","the bin always has one more"],["Fourth Lift Fortune","the level nobody wanted, you wanted"],["Deep Riches","the bottom of the mine is the top"],["Blind Lead","a shortcut straight to pay"],["Hidden Winze","a ladder down into luck"],["Lucky Collapse","the cave-in reveals a vault"],["Fortune's Fault","the crack that only pays"],["Jackpot Face","the wall is solid metal"],["The Midas Stratum","everything you touch grades high"],["Gilded Drift","even the waste rock shines"],["Fortune Favors The Deep","the bottom level pays double"]]},{"id":"mem","name":"Night Shift","blurb":"offline cap +30min each","start":1000000000,"growth":60,"eff":{"k":"offCap","v":1800},"nodes":[["Night Watchman","rounds at two, bucket at dawn"],["Lamp Rounds","the headlamps check the drifts"],["Moonlight Shift","the pit works by borrowed light"],["Graveyard Crew","the deepest shift, quietest pay"],["Owl Shift","the hoots count the carts"],["Ghost Shift","the machinery runs warm and alone"],["Skeleton Crew","just enough hands to keep digging"],["Sleepwalking Digger","the body knows the seam"],["Dream Drift","the mine tunnels through the night"],["Night Vision Lamps","the dark is a rumor"],["Midnight Face","the stope never sleeps"],["Small Hours Dig","the quiet hours break the most rock"],["Witching Hour Seam","the vein glows after midnight"],["Moonthaw Digging","the frost gives up at 3 a.m."],["Twilight Haul","the first belt starts before dawn"],["Pre-Dawn Blast","the mountain wakes to gunfire"],["Dawn Cleanup","the day shift inherits muck and ore"],["Second Breath","the mine exhales at sunrise"],["Night Owl Payroll","the nocturnal earn their bonus"],["Lucid Shift","dream the drift, wake in it"],["Split Shift","half the night, twice the ore"],["Full Night Cycle","the whole dark, productive"],["Deep Night Cycle","the hours nobody claims"],["Sleep Debt Repaid","the mine works while you don't"],["Power Nap Protocol","twenty minutes, full bucket"],["Rested Wrists","the swing comes back stronger"],["Long Night","the shift that never quite ends"],["Double Dark","two nights in one"],["Hibernation Vein","the seam winters over, rich in spring"],["Torpor Shift","the mine sips, never stops"],["Suspended Animation Seam","freeze the face, keep the pay"],["Time Capsule Stope","bury the tools, dig them out richer"],["Sleeper Vein","it waited a century, it can wait for you"],["Slow Clock Drift","the mine's clock runs deeper"],["Standing Order","keep digging until I return"],["Autonomous Night","the machines hold the vigil"],["Unattended Mill","the plant runs itself til morning"],["Phantom Operator","a ghost signs the shift book"],["Night Self","the other you keeps the picks sharp"],["The 4 A.M. Bonanza","the hour of secret riches"],["Morning Riches","wake to a full bin"],["The Mine Remembers","it dug all night, in your name"]]},{"id":"hag","name":"Prospecting","blurb":"machinery costs x0.985 each","start":1000000,"growth":2500,"eff":{"k":"machDisc","v":0.985},"nodes":[["Shallow Prospecting","the easy ore is still ore"],["Pan And Hope","the classic method, upgraded"],["Loam Testing","read the dirt like a ledger"],["Float Tracing","follow the stones upstream"],["Outcrop Reading","the surface tells where to dig"],["Gossan Sense","the rust cap marks the prize"],["Geological Map","the mountain, annotated"],["Claim Staking","the paperwork that finds seams"],["Trench Sampling","cheap holes, honest answers"],["Pitting Spree","many small digs, one big hunch"],["Geochem Survey","the soil confesses its grades"],["Magnetics Pass","the needle points to pay"],["Induced Polarization","the ground holds its charge, and its secrets"],["EM Conduct","the conductivity gives it away"],["Gravity Gradiometer","dense ore announces its weight"],["Radiometrics","the seam glows on the map"],["Hyperspectral Scan","each mineral wears its color"],["LiDAR Face Map","every wall, measured"],["Core Logging","the truth in cylinders, catalogued"],["Cuttings Analyst","read the bore dust like tea leaves"],["Assay On Site","no waiting for the lab"],["Portable XRF","grade the rock in your hand"],["Borehole Televiewer","a camera ride down the hole"],["Crosshole Tomography","see between the holes"],["Seismic Reflection","echoes draw the deep seams"],["Ground Radar","the drift's x-ray"],["Muon Tomography","the mountain photographs itself"],["Neutron Probe","the ore can't hide its water"],["Survey Drone Fleet","the pit mapped every sunrise"],["Prospect AI","the hunch, industrialized"],["Ore Body Model","the deposit as a sculpture of numbers"],["Block Model Refinement","smaller blocks, sharper prices"],["Dilution Control","waste stays out of the truck"],["Grade Control","every load, on target"],["Selective Mining","cut only what pays"],["High-Grade First","the rich faces jump the queue"],["Negotiated Claim","the landowner liked your maps"],["Joint Venture Terms","their money, your picks"],["Royalty Swap","a cut of tomorrow for a discount today"],["Equipment Syndicate","the fleet costs less in bulk"],["Direct-From-Works Deal","no middleman, no markup"],["The Perfect Prospectus","the mountain reads it and cooperates"]]},{"id":"sch","name":"Surveying","blurb":"research costs x0.99 each","start":10000000000,"growth":6000000,"eff":{"k":"resDisc","v":0.99},"nodes":[["First Field Notes","pencil maps of the first drift"],["Level And Staff","the mine, measured flat"],["Theodolite","angles that settle arguments"],["Plumb Line Doctrine","straight down, no debate"],["Transit Surveys","every drift, triangulated"],["Stope Markup","the walls get numbers"],["Closure Checks","the loops must agree with themselves"],["Traverse Network","the mine's skeleton, mapped"],["Baseline Control","one long line to trust"],["Benchmark Grid","heights, everywhere, forever"],["Tacheometry","distance from stadia hairs"],["Chain And Tape","the old way, still exact"],["Gyro Theodolite","north, found underground"],["Inertial Survey Unit","the drift maps itself while walking"],["Total Station","one gun, every measurement"],["Laser Plummet","the shaft hangs true"],["Scanner Point Cloud","a million points per minute"],["Photogrammetry Rig","photos become geometry"],["Drift Profile Scan","the tunnel's exact hollow"],["Volume Survey","the stope's appetite, measured"],["Dilution Mapping","the waste line, drawn hard"],["Reconciliation Model","plan meets reality, reconciled"],["Geologic Database","every log since day one"],["Section Interpretation","the seams drawn through solid rock"],["Structural Model","the faults, predicted"],["Resource Estimate","the ore, counted before mining"],["Reserve Statement","the ore, bankable"],["Sensitivity Analysis","the estimate, stress-tested"],["Block Model Audit","the numbers, cross-examined"],["Grade Shell Design","the cutoff, optimized"],["Mine Plan Iteration","the sequence, refined again"],["Sequence Optimization","the order that pays most"],["Stability Mapping","the ground grades itself"],["Hazard Register","the mine's fears, itemized"],["Ventilation Network Solve","the wind's route, computed"],["Dewatering Model","the water, outmaneuvered"],["Backfill Schedule","the paste, precisely timed"],["Equipment Simulation","the fleet, rehearsed in silicon"],["Digital Twin Calibration","the mirror tuned to the mine"],["Full Spectrum Survey","nothing underground is unknown"],["The Perfect Map","the mine and the model agree"],["Omniscient Survey","the mountain shows you everything"]]}]};
 const MILESTONES=[], FAMILIES=[], UPGRADES=[];
 (function(){
-  const mc={m1:500,m2:5e4,m3:2e5,m4:2e6,m5:5e8,m6:1e10,m7:1e30,m8:1e80,m13:1e4,
+  const mc={m1:500,m2:5e4,m3:2e5,m4:2e6,m5:5e8,m6:1e10,m7:1e30,m8:1e80,m13:1e4,m14:2e3,
             E400:BN.fromLog10(400),
             TETR4:BN.tetr(4),TETR12:BN.tetr(12),TETR35:BN.tetr(35)};   // keyed by cost token
   RES_RAW.milestones.forEach(u=>{
@@ -826,6 +850,7 @@ function applyResearch(u){
   else if(e.k==='allPow'){ S.mult=S.mult.pow(e.v); }
   else if(e.k==='allTetr'){ S.tetrN+=e.v; }        // tower research stacks layers
   else if(e.k==='cpsPct'&&!u.fam){ S.clickCpsPct+=e.v; }
+  else if(e.k==='autoClick'){ S.autoClick=true; }
   rebuildResCache();
 }
 
@@ -860,6 +885,7 @@ function collapse(){
   if(S.runTotal.s<0) S.runTotal=num(0);
   S.ores=num(0); S.b={}; S.up=new Set(); S.mult=num(1); S.tetrN=0;
   S.clickBase=num(1); S.clickCpsPct=0; S.frenzyUntil=0;
+  // S.seen deliberately survives collapse — notifications never repeat
   despawnGolden();
   dirtyCPS(); rebuildResCache();
   S.seed=S.defaultSeed||((Math.random()*2147483647)|0);   // default mine, or new seam
@@ -891,8 +917,8 @@ const ACH_RAW=[
 {id:'a17',name:"Googol Miner", desc:"1e100 lifetime ores", ck:"S.total.gte(1e100)"},
 {id:'a18',name:"Googolplex Adjacent", desc:"1e150 lifetime ores", ck:"S.total.gte(1e150)"},
 {id:'a19',name:"Beyond Double Precision", desc:"1e308 lifetime ores", ck:"S.total.gte(1e308)"},
-{id:'a20',name:"E-Nation", desc:"1e500 lifetime ores", ck:"S.total.gte(1e500)"},
-{id:'a21',name:"Tower Of Digits", desc:"1e1000 lifetime ores", ck:"S.total.gte(1e1000)"},
+{id:'a20',name:"E-Nation", desc:"1e500 lifetime ores", ck:"S.total.gte(BN.fromLog10(500))"},
+{id:'a21',name:"Tower Of Digits", desc:"1e1000 lifetime ores", ck:"S.total.gte(BN.fromLog10(1000))"},
 {id:'a22',name:"Tetrated", desc:"10^^3 lifetime ores", ck:"S.total.gte(BN.tetr(3))"},
 {id:'a23',name:"Tower Baron", desc:"10^^5 lifetime ores", ck:"S.total.gte(BN.tetr(5))"},
 {id:'a24',name:"The Ledger Breaks", desc:"10^^10 lifetime ores", ck:"S.total.gte(BN.tetr(10))"},
@@ -996,9 +1022,20 @@ const ACH_RAW=[
 ]
 ;
 const ACHS=ACH_RAW.map(a=>Object.assign({},a,{ck:new Function('return ('+a.ck+')')}));
+const ACH_BOOST={ easy:.006, mid:.012, hard:.022, insane:.045 };  // modest buff — full unlock = ×2.99
+function achBoost(){
+  // every unlock grants a permanent multiplier — bigger for later/rarer unlocks
+  let b=0;
+  for(let i=0;i<ACHS.length;i++){
+    if(!S.ach.has(ACHS[i].id)) continue;
+    const t=i<40? ACH_BOOST.easy : i<80? ACH_BOOST.mid : i<105? ACH_BOOST.hard : ACH_BOOST.insane;
+    b+=t;
+  }
+  return 1+b;
+}
 function checkAchs(){
   for(const a of ACHS){
-    if(!S.ach.has(a.id) && a.ck()){ S.ach.add(a.id); toast('UNLOCKED — '+a.name); }
+    if(!S.ach.has(a.id) && a.ck()){ S.ach.add(a.id); toast('UNLOCKED — '+a.name+'  (ALL ×'+achBoost().toFixed(3)+')'); }
   }
 }
 
@@ -1013,9 +1050,9 @@ function save(){
       clicks:S.clicks, goldenClicks:S.goldenClicks, clickCpsPct:S.clickCpsPct,
       frenzies:S.frenzies, luckies:S.luckies, reloads:S.reloads,
       offCollected:S.offCollected, shiftBuys:S.shiftBuys,
-      cores:S.cores, collapses:S.collapses, tetrN:S.tetrN, autobuy:S.autobuy, seed:S.seed,
+      cores:S.cores, collapses:S.collapses, tetrN:S.tetrN, autobuy:S.autobuy, autoClick:S.autoClick, seed:S.seed,
       runTotal:S.runTotal, mines:S.mines, defaultSeed:S.defaultSeed,
-      b:S.b, up:[...S.up], ach:[...S.ach],
+      b:S.b, up:[...S.up], ach:[...S.ach], seen:[...S.seen],
     });
     try{ localStorage.setItem(SAVE_KEY,json); }catch(e){ /* quota — mirror still below */ }
     idbSet(SAVE_KEY,json).catch(()=>{});
@@ -1028,12 +1065,12 @@ function applySaveData(d){
   S.clicks=d.clicks||0; S.goldenClicks=d.goldenClicks||0; S.clickCpsPct=d.clickCpsPct||0;
   S.frenzies=d.frenzies||0; S.luckies=d.luckies||0; S.reloads=(d.reloads||0)+1;
   S.offCollected=d.offCollected||0; S.shiftBuys=d.shiftBuys||0;
-  S.cores=d.cores||0; S.collapses=d.collapses||0; S.tetrN=d.tetrN||0; S.autobuy=d.autobuy!==false;
+  S.cores=d.cores||0; S.collapses=d.collapses||0; S.tetrN=d.tetrN||0; S.autobuy=d.autobuy!==false; S.autoClick=!!d.autoClick;
   S.runTotal=d.runTotal? rvBN(d.runTotal) : rvBN(d.total);   // legacy: carry lifetime
   S.mines=Array.isArray(d.mines)? d.mines : [];
   S.defaultSeed=d.defaultSeed||0;
   S.seed=d.seed||0;
-  S.b=d.b||{}; S.up=new Set(d.up||[]); S.ach=new Set(d.ach||[]);
+  S.b=d.b||{}; S.up=new Set(d.up||[]); S.ach=new Set(d.ach||[]); S.seen=new Set(d.seen||[]);
   dirtyCPS(); rebuildResCache();
   const cap=Math.max(hasPerk('p2')?24*3600:2*3600, resCache.offCap);
   const el=Math.min((Date.now()-d.t)/1000, cap);
@@ -1110,7 +1147,7 @@ renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));   // perf: cap fill-rate
 renderer.setSize(innerWidth,innerHeight);
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure=1.12;
+renderer.toneMappingExposure=1.18;
 renderer.shadowMap.enabled=true;
 renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 document.body.appendChild(renderer.domElement);
@@ -1144,14 +1181,17 @@ function toggleFS(force){
 /* invisible camera bounds — a hard sphere the orbit can't escape */
 const CAM_BOUND=23;   // just inside the void plain's edge (floor radius 24)
 
-scene.add(new THREE.HemisphereLight(0xcbb896,0x181208,0.5));
+scene.add(new THREE.HemisphereLight(0xcbb896,0x181208,.58));
 const dir=new THREE.DirectionalLight(0xffe8c4,1.05);
 dir.position.set(8,15,6);
 dir.castShadow=true;
 dir.shadow.mapSize.set(1024,1024);
 dir.shadow.camera.left=-16; dir.shadow.camera.right=16;
 dir.shadow.camera.top=16; dir.shadow.camera.bottom=-16;
+dir.shadow.bias=-0.0008; dir.shadow.radius=4;
 scene.add(dir);
+const rim=new THREE.DirectionalLight(0x8899ff,.22); rim.position.set(-10,6,-8); scene.add(rim);
+const fill=new THREE.DirectionalLight(0xffd7a8,.14); fill.position.set(-4,3,10); scene.add(fill);
 
 /* ============ RENDER OPTIMIZATIONS (no gfx change) ============ */
 {
@@ -1197,14 +1237,39 @@ function chunkGeo(rng){ // rugged voxel boulder — welded vertex displacement
   g.computeVertexNormals();
   return g;
 }
-const PALETTES=[
-  {a:0x241e15,b:0x2b2418,core:0xd99a3d,acc:0xf0e6d2},
-  {a:0x1a2028,b:0x202833,core:0x7fb8d8,acc:0xd8e8f0},
-  {a:0x2a1614,b:0x331c18,core:0xd96a3d,acc:0xf0d8c8},
-  {a:0x1a2317,b:0x202b1c,core:0x9ad97a,acc:0xe8f0d8},
-  {a:0x14161a,b:0x1a1d22,core:0xc0c8d4,acc:0xaab4c4},
-  {a:0x231a26,b:0x2b2030,core:0xc98ad9,acc:0xead8f0},
-];
+/* ============ UNLIMITED PALETTE ENGINE ============
+   No fixed color list — every mine rolls its own palette from the FULL
+   color wheel. A seeded base hue anchors the family; the core (the click
+   object), accent and both floor tones derive from it through seeded hue
+   relationships (analogous / complementary / triad / split-complement),
+   saturation and lightness bands. Any color can appear; floors stay dark
+   enough to read terrain, cores stay vivid enough to pop.               */
+function makePalette(rng){
+  const H=rng();                                   // base hue — ANY color on the wheel
+  const rel=Math.floor(rng()*4);                   // seeded hue relationship
+  const off=rel===0? .04+rng()*.14                 // analogous drift
+          : rel===1? .5+(rng()-.5)*.1              // complementary
+          : rel===2? 1/3+(rng()-.5)*.08            // triad
+          :         .42+rng()*.16;                 // split-complement
+  const coreH=(H+off)%1;
+  // floor tones: any hue family, dark + muted so voxels read
+  const fSat=.14+rng()*.34, fL=.05+rng()*.11;
+  const a=new THREE.Color().setHSL(H,fSat,fL).getHex();
+  const b=new THREE.Color().setHSL((H+(rng()-.5)*.1+1)%1,
+    fSat*(.7+rng()*.6),fL*(.8+rng()*.7)).getHex();
+  // the click object itself — vivid, any hue
+  const core=new THREE.Color().setHSL(coreH,.62+rng()*.38,.5+rng()*.18).getHex();
+  // accent — pale tint of the core or the base hue (dust, satellites, UI)
+  const acc=new THREE.Color().setHSL(rng()<.6?coreH:H,
+    .3+rng()*.4,.72+rng()*.18).getHex();
+  return {a,b,core,acc};
+}
+/* rare themed mines own these exact skins — identity colors, never rerolled */
+const THEME_PALS={
+  sonic:{a:0x0d5c2e,b:0x1a8a45,core:0xf4d03f,acc:0x2f8fdf},   // grass greens + gold
+  mario:{a:0x1a5e20,b:0x2e7d32,core:0xe53935,acc:0x90caf9},   // brick red + sky blue
+  backrooms:{a:0x8a7a2e,b:0x9c8b3a,core:0xf5e9a8,acc:0xd6c76a}// mono-yellow
+};
 /* gradient + full-wheel floor palettes: mult-color tiles that sweep the hue
    wheel or span a seeded gradient, applied via seeded per-mine floor paint  */
 const FLOOR_PAINTS=[
@@ -1216,13 +1281,17 @@ const FLOOR_PAINTS=[
   {kind:'triad'},                     // 3 complementary colors in the tile pattern
   {kind:'splitWheel'},                // hue wheel split into two half-arcs
   {kind:'pastelWheel'},               // full wheel, low saturation
+  {kind:'mesh'},                      // grid-line overlay on the duo base
+  {kind:'noiseQuilt'},                // smooth color patches from layered noise
+  {kind:'moire'},                     // soft interference bands
 ];
 function floorPaintFor(kind,pal,rng){
   // returns {paint(x,z,tile)->THREE.Color}
   const A=new THREE.Color(pal.a), B=new THREE.Color(pal.b), C=new THREE.Color(pal.core);
   const hueOff=rng(), sat=rng()*.35+.4, li=.28+rng()*.22;
   const g2=new THREE.Color().setHSL(rng(),sat*.7,li);
-  const hsl={};
+  const q3=new THREE.Color().setHSL(rng(),sat*.6,li+.1);
+  const qN=makeNoise((Math.floor(rng()*9999))+7);
   switch(kind){
     case 'gradient':
       return (x,z)=>A.clone().lerp(g2,(x+24)/48);
@@ -1238,11 +1307,20 @@ function floorPaintFor(kind,pal,rng){
       return (x,z)=>{ const a=Math.atan2(z,x); return new THREE.Color().setHSL((hueOff+(a>0?0:.5))%1,sat,li+.05); };
     case 'pastelWheel':
       return (x,z)=>new THREE.Color().setHSL((Math.atan2(z,x)/(Math.PI*2)+.5+hueOff)%1,.22,.55);
+    case 'mesh':
+      return (x,z,tile)=>{ const base=tile?A:B; const onGrid=((x%4===0)||(z%4===0));
+        return base.clone().lerp(C,onGrid?.5:0); };
+    case 'noiseQuilt':
+      return (x,z)=>{ const v=qN(x*.22+3,z*.22-9)*.6+qN(x*.5-7,z*.5+5)*.4;
+        return A.clone().lerp(B,v).lerp(q3,Math.max(0,v-.6)*.7); };
+    case 'moire':
+      return (x,z)=>{ const v=(Math.sin(x*1.3)+Math.sin(z*1.7)+Math.sin((x+z)*1.1))/3*.5+.5;
+        return A.clone().lerp(C,v); };
     default:
       return null;                    // duo handled by caller
   }
 }
-const CORE_SHAPES=['box','octa','icosa','dodeca','chunk','knot','torus','lathe','spike','cross','cone','prism'];
+const CORE_SHAPES=['box','octa','icosa','dodeca','chunk','knot','torus','lathe','spike','cross','cone','prism','star','gear','helix','bipyramid'];
 const glowTexture=(()=>{
   const c=document.createElement('canvas'); c.width=c.height=128;
   const x=c.getContext('2d');
@@ -1316,32 +1394,43 @@ function applyUITheme(pal,cCol,ringCol,TT,TS){
    Six math themes; every generator consumes seeded params so two mines
    rolling the same theme still produce different skies.                 */
 const SKY_TYPES=['stars','galaxy','nebula','void','aurora','ocean'];
-/* per-theme color families: each entry seeds the palette generator so even
-   the same theme rolls different hues/saturation/mix patterns per seed. */
+/* per-theme color personalities: hue is UNLIMITED — every sky rolls a base
+   hue from the FULL wheel and derives its family through a seeded hue
+   relationship (analogous / complement / triad / split). Themes keep their
+   character via saturation bands, lightness bands and hue spread instead
+   of locked hue ranges, so any color can appear in any theme.            */
 const SKY_PALETTES={
-  stars:{hues:[[.07,.13],[.55,.65],[.12,.2]],sat:[.3,.6],light:[.55,.85],bgTint:0x0b0a09,name:'ember-gold on black'},
-  galaxy:{hues:[[.55,.75],[.25,.4],[.85,1]],sat:[.5,.8],light:[.5,.8],bgTint:0x090a12,name:'blue-violet spiral'},
-  nebula:{hues:[[.75,.95],[.45,.6],[.0,.08]],sat:[.55,.85],light:[.45,.75],bgTint:0x0d0812,name:'magenta-teal clouds'},
-  void:{hues:[[.55,.62],[.3,.35],[.6,.7]],sat:[.1,.3],light:[.3,.6],bgTint:0x050507,name:'grey-bone emptiness'},
-  aurora:{hues:[[.35,.5],[.5,.62],[.28,.36]],sat:[.6,.9],light:[.5,.8],bgTint:0x060b0a,name:'green-cyan curtains'},
-  ocean:{hues:[[.5,.6],[.42,.5],[.58,.68]],sat:[.5,.85],light:[.5,.8],bgTint:0x04091a,name:'abyssal blue'},
+  stars:{sat:[.3,.6],light:[.55,.85],spread:[.05,.18],bgSat:.35,name:'seeded star field'},
+  galaxy:{sat:[.5,.8],light:[.5,.8],spread:[.08,.22],bgSat:.45,name:'seeded spiral'},
+  nebula:{sat:[.55,.85],light:[.45,.75],spread:[.1,.3],bgSat:.5,name:'seeded clouds'},
+  void:{sat:[.1,.3],light:[.3,.6],spread:[.04,.12],bgSat:.2,name:'seeded emptiness'},
+  aurora:{sat:[.6,.9],light:[.5,.8],spread:[.08,.2],bgSat:.4,name:'seeded curtains'},
+  ocean:{sat:[.5,.85],light:[.5,.8],spread:[.06,.16],bgSat:.5,name:'seeded abyss'},
 };
-function buildSkyPalette(type,rng,P){
+function buildSkyPalette(type,rng,P,forceHue){
   const fam=SKY_PALETTES[type]||SKY_PALETTES.stars;
   const pick=([a,b])=>a+rng()*(b-a);
-  // three primary star colors drawn from the family's hue ranges
-  P.colA=new THREE.Color().setHSL(pick(fam.hues[0]),pick(fam.sat),pick(fam.light));
-  P.colB=new THREE.Color().setHSL(pick(fam.hues[1]),pick(fam.sat),pick(fam.light));
-  P.colC=new THREE.Color().setHSL(pick(fam.hues[2]),pick(fam.sat)*.9,pick(fam.light)*.95);
-  // seeded mix PATTERN: how stars blend between the three family colors
+  // UNLIMITED HUES: base anchor anywhere on the wheel (themed mines pin it)
+  const base=forceHue!=null? forceHue : rng();
+  const rel=Math.floor(rng()*4);              // hue relationship: analogous / complement / triad / split
+  const spread=pick(fam.spread);
+  const off=rel===0? spread
+          : rel===1? .5+(rng()-.5)*.08
+          : rel===2? 1/3+(rng()-.5)*.06
+          :         .5-spread;
+  // three primary star colors — any hue, family-banded saturation/lightness
+  P.colA=new THREE.Color().setHSL(base,pick(fam.sat),pick(fam.light));
+  P.colB=new THREE.Color().setHSL((base+off+1)%1,pick(fam.sat),pick(fam.light));
+  P.colC=new THREE.Color().setHSL((base+rng()*.3)%1,pick(fam.sat)*.9,pick(fam.light)*.95);
+  // seeded mix PATTERN: how stars blend between the three colors
   P.mixMode=Math.floor(rng()*4);              // 0 dominant-A  1 A/B bands  2 radial  3 noise
   P.mixFreq=.3+rng()*1.8;                    // pattern frequency
   P.mixPhase=rng()*Math.PI*2;
   P.accent=rng();                             // chance a rare accent color appears
-  // background wash: family tint deepened toward the sky's own hue
-  const bg=new THREE.Color(fam.bgTint);
-  const wash=new THREE.Color().setHSL(pick(fam.hues[0]),.35,.06+rng()*.05);
-  P.skyBg=bg.lerp(wash,.25+rng()*.45);
+  // background wash: dark wash of the seeded hue — any color possible
+  const wash=new THREE.Color().setHSL(base,.35,.055+rng()*.05);
+  const bg=new THREE.Color().setHSL((base+rng()*.1)%1,fam.bgSat,.018+rng()*.03);
+  P.skyBg=bg.lerp(wash,.3+rng()*.4);
   P.palName=fam.name;
 }
 function skyStarColor(P,th,ph,r,i){
@@ -1354,7 +1443,7 @@ function skyStarColor(P,th,ph,r,i){
   if(P.accent>.72&&i%23===0) return P.colC.clone();           // rare accent stars
   return (t<.5?P.colA:P.colB).clone();
 }
-function buildSky(g,rng,type,P){
+function buildSky(g,rng,type,P,forceHue){
   const R=88+rng()*26;
   const mkPoints=(pos,cols,sizes,opacity)=>{
     const geo=new THREE.BufferGeometry();
@@ -1368,8 +1457,7 @@ function buildSky(g,rng,type,P){
     g.add(pts);
     return pts;
   };
-  const colAt=h=>new THREE.Color().setHSL(h,.65,.6+rng()*.25);
-  buildSkyPalette(type,rng,P);   // family colors + seeded mix pattern
+  buildSkyPalette(type,rng,P,forceHue);   // family colors + seeded mix pattern
   // DEEP COLOR LAYER — huge soft points form math-driven color patches,
   // halos and gradient illusions behind the star field
   {
@@ -1493,7 +1581,7 @@ function buildSky(g,rng,type,P){
       let p=tiltSpin(x,path+h*.2,z);
       pos.push(p[0],h*2.2+rng()*6,p[2]);
       const c=P.colA.clone().lerp(P.colB,Math.sin(th*2+P.mixPhase)*.5+.5)
-                  .lerp(new THREE.Color(0x88ffcc),rng()*.2);
+                  .lerp(P.colC,rng()*.2);   // family accent — any hue
       cols.push(c.r,c.g,c.b);
     }
     mkPoints(pos,cols,P.size*1.15);
@@ -1507,7 +1595,7 @@ function buildSky(g,rng,type,P){
       const y=R*.55+Math.sin(x*.14*P.freq+P.phase)*3+Math.sin(z*.11*P.freq-P.phase)*2.4;
       const p=tiltSpin(x,y,z);
       pos.push(p[0],p[1],p[2]);
-      const c=P.colA.clone().lerp(P.colB,rng()).lerp(new THREE.Color(0x9fd8ff),rng()*.4);
+      const c=P.colA.clone().lerp(P.colB,rng()).lerp(P.colC,rng()*.4);   // any hue
       cols.push(c.r,c.g,c.b);
     }
     mkPoints(pos,cols,P.size*1.5);
@@ -1540,17 +1628,17 @@ function buildWorld(seed){
     else if(roll<2) mineTheme='mario';
     else if(roll<3) mineTheme='backrooms';
   }
-  let pal=PALETTES[Math.floor(rng()*PALETTES.length)];
+  let pal=makePalette(rng);                          // unlimited — any color family
   let shape=CORE_SHAPES[Math.floor(rng()*CORE_SHAPES.length)];
   let skyType=null;                                   // themed mines force a sky
   if(mineTheme==='sonic'){
-    pal={a:0x0a2b52,b:0x0e3a6e,core:0x2f8fdf,acc:0xf4d03f};      // blue + gold rings
+    pal=THEME_PALS.sonic;
     shape='torus'; skyType='stars';
   }else if(mineTheme==='mario'){
-    pal={a:0x1a5e20,b:0x2e7d32,core:0xe53935,acc:0x90caf9};      // brick red + sky blue
+    pal=THEME_PALS.mario;
     shape='box'; skyType='stars';
   }else if(mineTheme==='backrooms'){
-    pal={a:0x8a7a2e,b:0x9c8b3a,core:0xf5e9a8,acc:0xd6c76a};      // mono-yellow
+    pal=THEME_PALS.backrooms;
     shape='box'; skyType='void';
   }
   // wave personality — color, reach, speed, width, count, pattern and bob all seeded
@@ -1709,7 +1797,7 @@ function buildWorld(seed){
   // get them — Green Hill keeps its blues, the Backrooms keep their yellow
   let paintKind='duo';
   if(!mineTheme && rng()<1/20){
-    const fun=['gradient','radialGrad','wheel','wheelRings','triad','splitWheel','pastelWheel'];
+    const fun=['gradient','radialGrad','wheel','wheelRings','triad','splitWheel','pastelWheel','mesh','noiseQuilt','moire'];
     paintKind=fun[Math.floor(rng()*fun.length)];
   }
   const paint=floorPaintFor(paintKind,pal,rng);
@@ -1849,6 +1937,60 @@ function buildWorld(seed){
   else if(shape==='prism'){                       // hexagonal crystal
     cgeo=new THREE.CylinderGeometry(1.05,1.05,2.2,6);
   }
+  else if(shape==='star'){                        // 5-point extruded star
+    const s=new THREE.Shape();
+    const sp=5,rO=1.4,rI=.55;
+    for(let i=0;i<sp*2;i++){ const ang=i*Math.PI/sp-Math.PI/2;
+      const r=i%2?rI:rO;
+      const px=Math.cos(ang)*r, py=Math.sin(ang)*r;
+      if(i===0) s.moveTo(px,py); else s.lineTo(px,py); }
+    s.closePath();
+    cgeo=new THREE.ExtrudeGeometry(s,{depth:.8,bevelEnabled:true,bevelSize:.07,bevelThickness:.07});
+    cgeo.center();
+  }
+  else if(shape==='gear'){                         // cogged disc with hub hole
+    const s=new THREE.Shape();
+    const teeth=10,rO=1.4,rI=1.05,hub=.42;
+    for(let i=0;i<teeth*2;i++){ const ang=i*Math.PI/teeth;
+      const r=i%2?rI:rO;
+      const px=Math.cos(ang)*r, py=Math.sin(ang)*r;
+      if(i===0) s.moveTo(px,py); else s.lineTo(px,py); }
+    s.closePath();
+    const hole=new THREE.Path(); hole.absarc(0,0,hub,0,Math.PI*2,true);
+    s.holes.push(hole);
+    cgeo=new THREE.ExtrudeGeometry(s,{depth:.55,bevelEnabled:false});
+    cgeo.center();
+  }
+  else if(shape==='helix'){                        // twisted hex prism
+    const seg=28;
+    const basePts=[];
+    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2; basePts.push([Math.cos(a)*1.0,Math.sin(a)*1.0]); }
+    const pos=[], ring=7;
+    for(let i=0;i<=seg;i++){
+      const t=i/seg, tw=t*Math.PI*2.4, y=t*2.4-1.2;
+      const cos=Math.cos(tw), sin=Math.sin(tw);
+      for(let k=0;k<6;k++){ const bx=basePts[k][0], bz=basePts[k][1];
+        pos.push(cos*bx-sin*bz, y, sin*bx+cos*bz); }
+      pos.push(cos*basePts[0][0]-sin*basePts[0][1], y, sin*basePts[0][0]+cos*basePts[0][1]);
+    }
+    const idx=[];
+    for(let i=0;i<seg;i++) for(let k=0;k<ring;k++){
+      const a=i*ring+k, b=i*ring+(k+1)%ring, c=(i+1)*ring+k, d=(i+1)*ring+(k+1)%ring;
+      idx.push(a,c,b, b,c,d);
+    }
+    const vb=new THREE.BufferGeometry();
+    vb.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+    vb.setIndex(idx); vb.computeVertexNormals();
+    cgeo=vb;
+  }
+  else if(shape==='bipyramid'){                    // 8-face bipyramid gem
+    const vb=new THREE.BufferGeometry();
+    const ap=[1.3,0,0, -1.3,0,0, 0,1.7,0, 0,-1.7,0, 0,0,1.3, 0,0,-1.3];
+    const ai=[0,2,4, 0,4,3, 0,3,5, 0,5,2,  1,4,2, 1,3,4, 1,5,3, 1,2,5];
+    vb.setAttribute('position',new THREE.Float32BufferAttribute(ap,3));
+    vb.setIndex(ai); vb.computeVertexNormals();
+    cgeo=vb;
+  }
   else cgeo=chunkGeo(rng);
   const coreMat=new THREE.MeshStandardMaterial({
     color:pal.core,
@@ -1964,13 +2106,19 @@ function buildWorld(seed){
     hueA:rng(), hueB:rng(), freq:.4+rng()*1.6, phase:rng()*6.28,
     bandH:.4+rng()*2.2, size:.35+rng()*.5, sheet:(rng()<.5),
   };
-  buildSky(g,rng,W.skyType,W.skyParams);
+  // themed mines pin the sky's base hue to their identity color
+  const skyHue=mineTheme==='sonic'? .58 : mineTheme==='mario'? .6
+             : mineTheme==='backrooms'? .13 : null;
+  buildSky(g,rng,W.skyType,W.skyParams,skyHue);
 
   scene.add(g);
   const cCol=new THREE.Color(pal.core);
   const cColF=cCol.clone().lerp(new THREE.Color(0xffffff),.45);
   applyUITheme(pal,cCol,ringCol,TT,TS);   // the terminal adopts the mine's colors
-  if(mineTheme) toast('RARE SEAM — '+(mineTheme==='sonic'?'GREEN HILL':mineTheme==='mario'?'MUSHROOM KINGDOM':'THE BACKROOMS'),'gold');
+  if(mineTheme && !S.seen.has('rare:'+seed)){
+    S.seen.add('rare:'+seed);
+    toast('RARE SEAM — '+(mineTheme==='sonic'?'GREEN HILL':mineTheme==='mario'?'MUSHROOM KINGDOM':'THE BACKROOMS'),'gold');
+  }
   // the sky's own background wash tints the scene behind everything
   if(W.skyParams&&W.skyParams.skyBg){
     scene.background=W.skyParams.skyBg.clone();
@@ -2125,7 +2273,7 @@ const gcur=document.createElement('div');
 gcur.id='gcur';
 document.body.appendChild(gcur);
 let gcx=innerWidth/2, gcy=innerHeight/2, gcurOn=false;
-let gpA=false, gpB=false, gpY=false, gpSt=false, gpRT=false, gpLT=false;
+let gpA=false, gpB=false, gpY=false, gpSt=false, gpRT=false, gpLT=false, gpX=false, gpNavCd=0;
 const DEAD=.22;
 function hoverScroller(){
   // whatever scrollable UI sits under the virtual cursor: terminal, archive, modal
@@ -2174,6 +2322,41 @@ function pollGamepad(dt){
   }
   if(gcurOn){ gcur.style.display='block'; gcur.style.left=gcx+'px'; gcur.style.top=gcy+'px'; }
 
+  // MINE ARCHIVE gamepad nav: dpad/stick jumps between cards, A = LOAD
+  {
+    const pg=document.getElementById('minesPage');
+    if(pg&&!pg.classList.contains('hidden')){
+      const cards=[...document.querySelectorAll('.mCard')];
+      if(cards.length){
+        if(!cards.some(c=>c.classList.contains('gsel')))
+          cards[0].classList.add('gsel');
+        if(dx||dy){                                   // reuse stick/d-pad press edge
+          const cur=cards.findIndex(c=>c.classList.contains('gsel'));
+          let ni=cur;
+          if((dx<-.5||held(14))&&gpNavCd<=0){ ni=(cur-1+cards.length)%cards.length; gpNavCd=.22; }
+          else if((dx>.5||held(15))&&gpNavCd<=0){ ni=(cur+1)%cards.length; gpNavCd=.22; }
+          else if((dy<-.5||held(12))&&gpNavCd<=0){ ni=Math.max(0,cur-3); gpNavCd=.22; }
+          else if((dy>.5||held(13))&&gpNavCd<=0){ ni=Math.min(cards.length-1,cur+3); gpNavCd=.22; }
+          if(ni!==cur){
+            cards[cur].classList.remove('gsel');
+            cards[ni].classList.add('gsel');
+            cards[ni].scrollIntoView({block:'nearest'});
+          }
+        }
+        if(held(0)&&!gpA){                            // A on focused card = LOAD
+          const card=cards.find(c=>c.classList.contains('gsel'));
+          if(card){ const id=+card.dataset.id; const m=S.mines.find(x=>x.id===id);
+            if(m){ S.seed=m.seed; rebuildWorld(); save(); closeMinesPage(); } }
+        }
+        if(held(2)&&!gpX){                            // X on card = DEF
+          const card=cards.find(c=>c.classList.contains('gsel'));
+          if(card) card.querySelector('button[data-a=def]').click();
+        }
+      }
+      gpNavCd=Math.max(0,gpNavCd-dt);
+    }
+  }
+
   // RIGHT STICK — scroll the UI the cursor hovers, otherwise orbit the camera
   const rx=ax[2]||0, ry=ax[3]||0;
   if(Math.abs(rx)>DEAD||Math.abs(ry)>DEAD){
@@ -2207,8 +2390,9 @@ function pollGamepad(dt){
 
   // A — click / mine
   const a=held(0);
-  if(a&&!gpA) synthClick(gcx,gcy);
+  if(a&&!gpA){ synthClick(gcx,gcy); }
   gpA=a;
+  const xx=held(2); gpX=xx;
   // B — back out
   const b=held(1);
   if(b&&!gpB){
@@ -2378,24 +2562,19 @@ addEventListener('pointerdown',e=>{
 /* ============ UI BUILD — paged for 1792 machines / 433 research / 121 unlocks ============ */
 const treeEl=document.getElementById('tree');
 const bldsEl=document.getElementById('blds');
-let curTier=0, curFam=-1, curAchPage=0;      // curFam -1 = milestones view
+let curTier=0, curFam=-1;                     // curFam -1 = milestones view
 const bRefs={};
 let uRefs={};
-const ACH_PAGE=31;
 
 function buildTierStrip(){
   const el=document.getElementById('tierStrip');
-  const max=maxVisibleTier();
   let html='';
   for(let t=0;t<28;t++){
-    if(t>max) html+='<button class="ts" disabled>?</button>';
-    else{
-      const un=t===0||unlockedTier(t);
-      html+='<button class="ts'+(t===curTier?' on':'')+(un?'':' lk')+'" data-t="'+t+'">'+(t+1)+'</button>';
-    }
+    const un=t===0||unlockedTier(t);
+    html+='<button class="ts'+(t===curTier?' on':'')+(un?'':' lk')+'" data-t="'+t+'">'+(t+1)+'</button>';
   }
   el.innerHTML=html;
-  [...el.children].forEach((b,i)=>{ if(!b.disabled) b.onclick=()=>{ curTier=i; buildTierStrip(); buildMachineryPage(); }; });
+  [...el.children].forEach((b,i)=>{ b.onclick=()=>{ curTier=i; buildTierStrip(); buildMachineryPage(); }; });
 }
 function buildMachineryPage(){
   const p='t'+String(curTier+1).padStart(2,'0')+'m';
@@ -2461,15 +2640,6 @@ function buildResearchPage(){
   }
   refreshUI();
 }
-function buildAchPages(){
-  const pages=Math.ceil(ACHS.length/ACH_PAGE);
-  const el=document.getElementById('achPages');
-  let html='';
-  for(let i=0;i<pages;i++)
-    html+='<button class="ts'+(i===curAchPage?' on':'')+'" data-p="'+i+'">'+(i+1)+'-'+Math.min((i+1)*ACH_PAGE,ACHS.length)+'</button>';
-  el.innerHTML=html;
-  [...el.children].forEach(b=>b.onclick=()=>{ curAchPage=+b.dataset.p; buildAchPages(); $('achs')._k=''; refreshUI(); });
-}
 
 /* ============ MINE ARCHIVE — dedicated page with live-rendered previews ============ */
 const MINE_ADJ=['Whispering','Gilded','Hollow','Sunken','Crooked','Silent','Weeping','Ember','Frost','Shadowed','Iron','Copper','Salted','Blind','Restless','Ancient','Nameless','Ragged','Veiled','Drowned','Sleeping','Starved','Gloomy','Glittering','Forgotten','Patient','Humming','Blank','Jagged','Buried','Bitter','Lucky','Deep','Pale','Quiet','Rusted','Frozen','Molten','Wandering','Grinning'];
@@ -2482,7 +2652,16 @@ function mineName(){
   return 'Seam № '+(1000+((Math.random()*9000)|0));
 }
 const mineShots={};   // seed -> dataURL thumbnail (in-memory cache)
-function palOf(seed){ const r=mulberry32(seed); return PALETTES[(r()*PALETTES.length)|0]; }
+/* mirrors buildWorld's first rng draws exactly, so the archive card dot
+   always matches the mine's live palette (themed mines keep their skins) */
+function palOf(seed){
+  const r=mulberry32(seed);
+  const roll=r()*100;                        // same first roll as buildWorld
+  if(roll<1) return THEME_PALS.sonic;
+  if(roll<2) return THEME_PALS.mario;
+  if(roll<3) return THEME_PALS.backrooms;
+  return makePalette(r);                     // same generator, same draw order
+}
 
 /* offscreen thumbnail of a saved seam: temporary rebuild + tiny render + restore */
 function shootWorld(seed){
@@ -2551,12 +2730,11 @@ function openMinesPage(){
 }
 function closeMinesPage(){ document.getElementById('minesPage').classList.add('hidden'); }
 function saveMine(){
-  if(S.mines.some(x=>x.seed===S.seed)){ toast('SEAM ALREADY IN LIBRARY'); return; }
+  if(S.mines.some(x=>x.seed===S.seed)) return;       // silent: card already in library
   const m={id:Date.now(),name:mineName(),seed:S.seed};
   S.mines.push(m);
   mineShots[m.seed]=shootWorld(m.seed);   // instant thumbnail
   renderMinesPage(); save();
-  toast('MINE SAVED — '+m.name);
 }
 function startRename(id){
   const card=document.querySelector('.mCard[data-id="'+id+'"]'); if(!card) return;
@@ -2586,17 +2764,14 @@ function startRename(id){
     if(a==='load'){
       S.seed=m.seed; rebuildWorld(); renderMinesPage(); save();
       closeMinesPage();
-      toast('MINE LOADED — '+m.name);
     }else if(a==='def'){
       S.defaultSeed=(S.defaultSeed===m.seed?0:m.seed);
       renderMinesPage(); save();
-      toast(S.defaultSeed?('DEFAULT MINE — '+m.name+' REGENERATES ON COLLAPSE'):'DEFAULT MINE CLEARED');
     }else if(a==='ren') startRename(id);
     else if(a==='del'){
       S.mines=S.mines.filter(x=>x.id!==id);
       if(S.defaultSeed===m.seed) S.defaultSeed=0;
       renderMinesPage(); save();
-      toast('MINE REMOVED');
     }
   });
   addEventListener('keydown',e=>{
@@ -2719,7 +2894,7 @@ function refreshUI(){
       const qLabel=(buyQty==='max'&&maxAffordable(b)===0)?'1':
         (buyQty==='max'? maxAffordable(b) : buyQty);
       putH(r.cost,bc.fmt()+(q>1||buyQty==='max'?'<small>×'+qLabel+' · '+paybackStr(b,bc)+'</small>':'<small>'+paybackStr(b,c)+'</small>'));
-      const cls='bld'+(S.ores.lt(bc)&&buyQty!=='max'?' cant':'');
+      const cls='bld'+((buyQty!=='max'&&S.ores.lt(bc))||(buyQty==='max'&&maxAffordable(b)===0)?' cant':'');
       if(r.row._c!==cls){ r.row._c=cls; r.row.className=cls; }
     }
   }
@@ -2737,16 +2912,17 @@ function refreshUI(){
     }
   }
 
-  putT(tabBtns[2],'Unlocks '+S.ach.length+'/'+ACHS.length);
   if(tabA){
-    const key=curAchPage+':'+S.ach.length;
+    putT($('achBoostT'),'total boost ×'+achBoost().toFixed(3));
+    const key=String(S.ach.length);
     if($('achs')._k!==key){
       $('achs')._k=key;
-      const pg=ACHS.slice(curAchPage*ACH_PAGE,(curAchPage+1)*ACH_PAGE);
-      putH($('achs'),pg.map(a=>{
+      putH($('achs'),ACHS.map((a,i)=>{
         const on=S.ach.has(a.id);
+        const tier=i<40?'easy':i<80?'mid':i<105?'hard':'insane';
+        const bt=(i<40?ACH_BOOST.easy:i<80?ACH_BOOST.mid:i<105?ACH_BOOST.hard:ACH_BOOST.insane);
         return '<div class="ach'+(on?' on':'')+'"><b>'+a.name+'</b>'+
-          '<small>'+(on?'unlocked':'locked')+' — '+a.desc+'</small></div>';
+          '<small>'+(on?'unlocked':'locked')+' — '+a.desc+' <span style="color:var(--amber)">×'+(1+bt).toFixed(3)+'</span></small></div>';
       }).join(''));
     }
   }
@@ -3062,7 +3238,9 @@ function tick(now){
   frames++;
   pollGamepad(dt);
   updateCollapseAnim(dt);
-  const g=gainAuto().mul(dt);
+  // AUTO-CLICKER: 12 taps/sec once researched; manual taps stack on top
+  let g=gainAuto().mul(dt);
+  if(S.autoClick) g=g.plus(gainPerClick().mul(num(12*dt)));
   S.ores=S.ores.plus(g); S.total=S.total.plus(g); S.runTotal=S.runTotal.plus(g);
 
   animateWorld(now,dt,fr);
